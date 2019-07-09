@@ -14,6 +14,18 @@ class GooglePlacesSummary():
         self.endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
         self.key = conf.GOOGLE_MAPS_API_KEY
         self.tract_data = tract_data
+        self.places_data = self.create_empty_dataframe()
+
+    def create_empty_dataframe(self):
+        '''
+        Initialize empty dataframe for storing returned data from Places API
+        '''
+
+        places_data = gpd.GeoDataFrame(columns=['geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
+           'plus_code', 'price_level', 'rating', 'reference', 'scope', 'types',
+           'user_ratings_total', 'vicinity'])
+
+         return places_data
 
     def request_nearby_places(self, location, place_type, radius=400):
 
@@ -54,19 +66,21 @@ class GooglePlacesSummary():
                  return p
 
     def get_tract_data(self, tract_polygon, place_type, num_samples=3):
+        '''
+        Sample a random point in a the geometry of a tract num_samples times
+        '''
 
-        # Init empty dataframe
         tract_data = gpd.GeoDataFrame(columns=['geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
            'plus_code', 'price_level', 'rating', 'reference', 'scope', 'types',
            'user_ratings_total', 'vicinity'])
 
         for i in range(num_samples):
-            sleep(5)
+            sleep(10)
             point_in_poly = self.get_random_point_in_polygon(tract_polygon)
             x, y = point_in_poly.x, point_in_poly.y
             coords = '{}, {}'.format(y, x)
 
-            data_for_single_point = self.request_nearby_places(location=coords, place_type=place_type, radius=400)
+            data_for_single_point = self.request_nearby_places(location=coords, place_type=place_type, radius=800)
 
             tract_data = pd.concat([tract_data, data_for_single_point])
 
@@ -80,6 +94,7 @@ class GooglePlacesSummary():
         for i, row in self.tract_data.iterrows():
             geometry = row['geometry']
             tract_id = row['fips_state_county_tract_code']
+            print(tract_id)
 
             results.loc[i, 'fips_state_county_tract_code'] = tract_id
     #         results.loc[i, 'geometry'] = geometry
