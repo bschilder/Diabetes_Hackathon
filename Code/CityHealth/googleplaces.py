@@ -21,11 +21,10 @@ class GooglePlacesSummary():
         Initialize empty dataframe for storing returned data from Places API
         '''
 
-        places_data = gpd.GeoDataFrame(columns=['geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
+        places_data = gpd.GeoDataFrame(columns=['fips_state_county_tract_code', 'sample', 'geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
            'plus_code', 'price_level', 'rating', 'reference', 'scope', 'types',
            'user_ratings_total', 'vicinity'])
-
-         return places_data
+        return places_data
 
     def request_nearby_places(self, location, place_type, radius=400):
 
@@ -34,7 +33,6 @@ class GooglePlacesSummary():
                     'location': location,
                     'radius': radius,
                     'type': place_type,
-
                 }
 
         r = requests.get(self.endpoint, params=params)
@@ -50,11 +48,11 @@ class GooglePlacesSummary():
         # If more than 20 results found continue making calls for 3 pages (API maxes at 60 results)
         while 'next_page_token' in r.json().keys() and i < 5:
             i += 1
-            sleep(5)
+            sleep(1)
             params['pagetoken'] = r.json()['next_page_token']
-            r = requests.get(url, params=params)
+            r = requests.get(self.endpoint, params=params)
             df = pd.DataFrame(r.json()['results'])
-            results = pd.concat([results, df], ignore_index=True)
+            results = pd.concat([results, df], ignore_index=True, sort=False)
 
         return results
 
@@ -70,19 +68,19 @@ class GooglePlacesSummary():
         Sample a random point in a the geometry of a tract num_samples times
         '''
 
-        tract_data = gpd.GeoDataFrame(columns=['geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
+        tract_data = gpd.GeoDataFrame(columns=['sample', 'geometry', 'icon', 'id', 'name', 'opening_hours', 'photos', 'place_id',
            'plus_code', 'price_level', 'rating', 'reference', 'scope', 'types',
            'user_ratings_total', 'vicinity'])
 
         for i in range(num_samples):
-            sleep(10)
+            sleep(1)
             point_in_poly = self.get_random_point_in_polygon(tract_polygon)
             x, y = point_in_poly.x, point_in_poly.y
             coords = '{}, {}'.format(y, x)
 
             data_for_single_point = self.request_nearby_places(location=coords, place_type=place_type, radius=800)
-
-            tract_data = pd.concat([tract_data, data_for_single_point])
+            data_for_single_point['sample'] = i
+            tract_data = pd.concat([tract_data, data_for_single_point], sort=False)
 
         return tract_data.loc[~tract_data['id'].duplicated()]
 
@@ -102,36 +100,38 @@ class GooglePlacesSummary():
             # Get summary statistics
 
             places = ['supermarket',
-                               'restaurant',
-                               'school',
-                               'subway_station',
-                               'taxi_stand',
-                               'train_station',
-                               'transit_stand',
-                               'hospital',
-                               'police',
-                               'park',
-                               'parking',
-                               'meal_delivery',
-                               'meal_takeaway',
-                               'liquor_store',
-                               'bar',
-                               'bus_station',
-                               'cafe',
-                               'car_wash',
-                               'car_dealear',
-                               'car_repair',
-                               'convenience_store',
-                               'doctor',
-                               'fire_station',
-                               'gas_station',
-                               'hospital',
-                               'gym',
-                              ]
-            places = ['supermarket']
+                       'restaurant',
+                       'school',
+                       'subway_station',
+                       'taxi_stand',
+                       'train_station',
+                       'transit_stand',
+                       'hospital',
+                       'police',
+                       'park',
+                       'parking',
+                       'meal_delivery',
+                       'meal_takeaway',
+                       'liquor_store',
+                       'bar',
+                       'bus_station',
+                       'cafe',
+                       'car_wash',
+                       'car_dealear',
+                       'car_repair',
+                       'convenience_store',
+                       'doctor',
+                       'fire_station',
+                       'gas_station',
+                       'hospital',
+                       'gym',
+                      ]
+            places = ['supermarket', 'restaurant']
 
             for place_type in places:
                 tract_data = self.get_tract_data(geometry, place_type=place_type, num_samples=3)
+                tract_data['fips_state_county_tract_code'] = tract_id
+                self.places_data = pd.concat([self.places_data, tract_data], sort=False, ignore_index=True)
                 results.loc[i, place_type] = tract_data.shape[0]
 
         return results
@@ -140,6 +140,6 @@ if __name__ == "__main__":
 
     geo = gpd.read_file('data/cityhealth-newyork-190506/CHDB_data_tract_NY v5_3_withgeo.geojson')
 
-    places_summary = GooglePlacesSummary(tract_data=geo[:5])
+    places_summary = GooglePlacesSummary(tract_data=geo[:2])
     summary = places_summary.get_tract_summary_data()
     print(summary)
