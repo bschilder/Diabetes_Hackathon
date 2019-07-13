@@ -42,7 +42,7 @@ class GooglePlacesSummary():
            'plus_code', 'price_level', 'rating', 'reference', 'scope', 'types',
            'user_ratings_total', 'vicinity'])
 
-        results = pd.concat([results, df])
+        results = pd.concat([results, df], sort=False)
 
         i = 0
         # If more than 20 results found continue making calls for 3 pages (API maxes at 60 results)
@@ -128,16 +128,17 @@ class GooglePlacesSummary():
             #            'hospital',
             #            'gym',
             #           ]
-            places = ['supermarket', 'restaurant', 'convenience_store', 'meal_takeaway', 'meal_delivery', 'train_station', 'transit_stand', 'bus_station', 'subway_station', 'park', 'gas_station']
+            places = ['supermarket', 'convenience_store', 'meal_takeaway', 'meal_delivery', 'train_station', 'subway_station', 'park', 'gas_station']
 
             for place_type in places:
+                print(tract_id, place_type)
                 attempt = 0
-                while attempt <= 3:
+                while attempt < 3:
                     attempt += 1
                     sleep(5)
                     try:
                         tract_data = self.get_tract_data(geometry, place_type=place_type, num_samples=num_samples, sample=sample)
-                        attempt = 3
+                        attempt = 4
                     except Exception as e:
                         if attempt <= 2:
                             print("Received error from server %s".format(e))
