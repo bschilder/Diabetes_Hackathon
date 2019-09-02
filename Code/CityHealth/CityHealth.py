@@ -33,6 +33,19 @@
 ### xticks:
 # https://plot.ly/javascript/reference/#layout-xaxis-ticklen
 
+## Flask-nginx (Daniel's template for python app deployement)
+### https://github.com/MaayanLab/flask-nginx
+
+## Heroku setup
+### https://devcenter.heroku.com/articles/getting-started-with-python#run-the-app-locally
+
+## Static Flask site tutorial:
+### https://stevenloria.com/hosting-static-flask-sites-on-github-pages/
+## Flask Frozen documentation:
+### https://pythonhosted.org/Frozen-Flask/
+
+## Dash w/ WSGI
+### https://dash.plot.ly/integrating-dash
 #==========================================
 
 

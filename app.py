@@ -2,11 +2,15 @@
 
 
 import Code.CityHealth.CityHealth as CH
+from os import system
 import plotly_express as px
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
+from flask import Flask
+from flask_flatpages import FlatPages
+from flask_frozen import Freezer
 
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
@@ -33,11 +37,12 @@ n_factors_dict = [dict(label=x, value=x) for x in factor_range]
 col_options = [tract_dict, n_factors_dict]
 dropdowns = ["Tract", "N_Factors"]
 
-
-
+# By exposing this server variable, you can deploy Dash apps like you would any Flask app
+server = flask.Flask(__name__)
 app = dash.Dash(
-    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],server=server
 )
+# app.config.get('project/settings.py')# .from_pyfile('project/settings.py')
 
 app.layout = html.Div(
     [
@@ -48,8 +53,12 @@ app.layout = html.Div(
                   ],
                  style={"width": "60%"}),
         html.Div(
-            [html.P(["Tract:", dcc.Dropdown(id="Tract", options=tract_dict, value=36119005702)]),
-             html.P(["N_Factors:", dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
+            [html.Br(),
+             html.Label(["Tract :"]),
+             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=36119005702)]),
+             html.Br(),
+             html.Label(["Number of Risk Factors :"]),
+             html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
             style={"width": "25%", "float": "left"},
         ),
         dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"}),
@@ -110,6 +119,14 @@ def make_figure(Tract, n_factors):
 )
 
 
-app.run_server(debug=True)
-# if __name__ == '__main__':
-#     app.run_server(debug=True)
+# Freeze flask!
+pages = FlatPages(app)
+freezer = Freezer(app)
+# Save a list of all requirements for THIS repo only
+# system("pipreqs --force ./")
+
+if __name__ == '__main__':
+    DEBUG = False
+    # Debug mode
+    if DEBUG:
+        app.run_server(debug=True)
