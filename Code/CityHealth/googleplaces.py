@@ -13,7 +13,7 @@ class GooglePlacesSummary():
     def __init__(self, tract_data):
         self.endpoint = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
         self.key = conf.GOOGLE_MAPS_API_KEY
-        self.tract_data = tract_data
+        self.tract_data = tract_data.reset_index(drop=True)
         self.places_data = self.create_empty_dataframe()
 
     def create_empty_dataframe(self):
@@ -87,7 +87,7 @@ class GooglePlacesSummary():
 
         return tract_data.loc[~tract_data['id'].duplicated()]
 
-    def get_tract_summary_data(self, num_samples=1, sample=None):
+    def get_tract_summary_data(self, num_samples=1, sample=None, checkpoint_path=None):
 
         # Create a new container to store summary data
         results = pd.DataFrame(columns=['fips_state_county_tract_code'])
@@ -147,6 +147,18 @@ class GooglePlacesSummary():
                 tract_data['fips_state_county_tract_code'] = tract_id
                 self.places_data = pd.concat([self.places_data, tract_data], sort=False, ignore_index=True)
                 results.loc[i, place_type] = tract_data.shape[0]
+
+            # If checkpoint_path, save checkpoint of tract_data every few row
+            checkpoint_batch_size = 50
+            if i % checkpoint_batch_size == 0 and i > 0:
+                if checkpoint_path is not None:
+                    print(i)
+                    start_tract_code = self.places_data.iloc[i-checkpoint_batch_size, 0]
+                    end_tract_code = self.places_data.iloc[i, 0]
+                    filename = 'places_data_{}_{}_checkpoint.csv'.format(start_tract_code, end_tract_code)
+                    self.places_data.iloc[i-checkpoint_batch_size:i].to_csv(checkpoint_path + filename, index=False)
+                    # except Exception as e:
+                    #     print('Could not save checkpoint: {}'.format(e))
 
         return results
 
