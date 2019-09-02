@@ -2,16 +2,6 @@
 
 
 import Code.CityHealth.CityHealth as CH
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-
-data_raw = CH.preprocess_data(raw=True)
-data = CH.preprocess_data()
-weights = CH.weight_features(data, test_size=0, method="multivariate_regression", plot_weights=False)
-polar_data = CH.prepare_polar(data, weights, stcotr_fips=36119005702, n_factors=5)
-
-
 import plotly_express as px
 import dash
 import dash_html_components as html
@@ -21,15 +11,28 @@ from dash.dependencies import Input, Output
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
 
+method="linear_regression"
+data_raw = CH.preprocess_data(raw=True)
+data = CH.preprocess_data()
+city_average = round(data["Diabetes"].mean(),1)
+#Train model on data
+model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
+# Label coefs
+weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
 polar_data = CH.prepare_polar(data, weights, n_factors=5)
+# CH.weights_plot(weights)
+# Find mix/max for radar plot
+min_max = CH.min_max_scores(data, weights)
+
 # Tract options
 tract_dict = [dict(label=x, value=x) for x in data.index]
 # N factors options
-factor_range = list(range(1,len(data.columns)-1))
+factor_range = list(range(1,len(data.columns)))
 n_factors_dict = [dict(label=x, value=x) for x in factor_range]
 
 col_options = [tract_dict, n_factors_dict]
 dropdowns = ["Tract", "N_Factors"]
+
 
 
 app = dash.Dash(
@@ -38,35 +41,75 @@ app = dash.Dash(
 
 app.layout = html.Div(
     [
-        html.H1("CityHealth: Diabetes Risk Profile"),
-        html.Div(html.H5(["Select the community (a.k.a. Tract) of interest below. \
-                On the right, a radar plot will display the Risk Profile of that Tract."]),
-                 style={"width": "50%"}),
+        html.H1("Diabetes Risk Profile"),
+        html.Div([
+                 html.H5(["Select the community (a.k.a. Tract) of interest below."]),
+                 html.H5(["On the right, a radar plot will display the Risk Profile of that Tract."])
+                  ],
+                 style={"width": "60%"}),
         html.Div(
             [html.P(["Tract:", dcc.Dropdown(id="Tract", options=tract_dict, value=36119005702)]),
-             html.P(["N_Factors:", dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=5)])],
+             html.P(["N_Factors:", dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
             style={"width": "25%", "float": "left"},
         ),
         dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"}),
-    ]
+    ], style={"padding":"20px"}
 )
 
 
 @app.callback(Output("graph", "figure"), [Input(d, "value") for d in dropdowns])
-def make_figure(Tract=36119005702, n_factors=5):
+def make_figure(Tract, n_factors):
     polar_data = CH.prepare_polar(data, weights, stcotr_fips=Tract, n_factors=n_factors)
+    predicted, actual = CH.predict_value(model, data, stcotr_fips=Tract, label_var="Diabetes")
+    title = "% of Community with Diabetes:<br>"+\
+            "  Predicted = " + str(round(predicted,1)) + " %<br>"+ \
+            "  Actual = " + str(actual) + " %<br>"+\
+            "  City Average = "+str(city_average)+" %"
     return px.line_polar(
         polar_data,
         r="Risk Score",
         theta="metric_name",
+        # color="Risk Score",
+        # template="plotly_dark",
         height=700,
-    ).update_traces(fill='toself')
+    ).update_traces(
+        fill='toself',
+        fillcolor="rgba(0, 255, 238, .9)",#"rgba(0,0,255, .9)",
+        mode = "lines+markers",
+        line_color = "magenta",
+        marker=dict(
+            color="magenta",
+            symbol="circle",
+            size=12 )
+    ).update_layout(
+    title = dict(
+        text = title,
+        x = 1,
+        y = .925),
+    font_size = 15,
+    showlegend = False,
+    polar = dict(
+      bgcolor = "rgba(0,0,0, .85)",#"""rgb(223, 223, 223)",
+      angularaxis = dict(
+        linewidth = 3,
+        showline=True,
+        linecolor='rgba(0,0,0, .85)',
+        color="black"
+      ), radialaxis = dict(
+            side = "clockwise",
+            showline = True,
+            linewidth = 2,
+            gridcolor = "white",
+            gridwidth = 2,
+            color = "magenta",
+            visible =True,
+            range=[min_max["min"], min_max["max"]]
+          )
+    ),
+    paper_bgcolor = "rgba(0,0,0,0)"
+)
 
 
 app.run_server(debug=True)
 # if __name__ == '__main__':
 #     app.run_server(debug=True)
-# import plotly.express as px
-#     fig = px.line_polar(polar_data, r='Risk Score', theta='metric_name', line_close=True)
-#     fig.update_traces(fill='toself')
-#     fig.show()

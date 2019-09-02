@@ -26,6 +26,13 @@
 ### https://github.com/plotly/dash-px/blob/master/app.py
 ### https://medium.com/plotly/introducing-plotly-express-808df010143d
 
+## Random Forest tutorial
+### https://towardsdatascience.com/random-forest-in-python-24d0893d51c0
+
+## Radar Plots
+### xticks:
+# https://plot.ly/javascript/reference/#layout-xaxis-ticklen
+
 #==========================================
 
 
@@ -79,12 +86,14 @@ def tract_api(state, city=False, token="6ad860a334109640f9abd53018d9bcb7"):
     return data
 # data = tract_api(state="NY")
 
-def normalize(data):
+def normalize(data, label="Diabetes"):
+    # Normalize all columns except the label ("Diabetes")
+    # to maintain interpretability of Diabetes predictions.
     from sklearn.preprocessing import StandardScaler
+    data_norm = data.copy()
+    features = data.loc[:,data.columns!=label]
+    data_norm.loc[:,data_norm.columns!=label] = StandardScaler().fit_transform(features)
     # MinMaxScaler()
-    data_norm = pd.DataFrame(StandardScaler().fit_transform(data),
-                             index=data.index,
-                             columns=data.columns)
     return data_norm
 
 def pivot_dropna(data):
@@ -119,17 +128,42 @@ def data_split(data, y_var="Diabetes", test_size=0.3):
 ################## Feature selection models ###################
 #--------------------------------------------------------------#
 
+def test_predictions(model, X_test, y_test):
+    predictions = model.predict(X_test)
+    # Calculate the absolute errors
+    errors = abs(predictions - y_test)
+    # Print out the mean absolute error (mae)
+    print('Mean Absolute Error:', round(np.mean(errors), 4), '%.')
+
+    # Calculate mean absolute percentage error (MAPE)
+    mape = 100 * (errors / y_test)
+    # Calculate and display accuracy
+    accuracy = 100 - np.mean(mape)
+    print('Accuracy:', round(accuracy, 4), '%.')
+    return errors
+
+def predict_value(model, data, stcotr_fips, label_var="Diabetes"):
+    data_sub = data.loc[stcotr_fips].copy()
+    X = np.array(data_sub[data_sub.index!=label_var]).reshape(1, -1)
+    y = np.array(data_sub[label_var])
+    actual = float(y)
+    predicted = model.predict(X)
+    return float(predicted), actual
+
 # Lasso regression
-def lasso(X, y, alpha=2):
+def lasso(X_train, X_test, y_train, y_test, alpha=1):
     from sklearn.linear_model import Lasso
     # Lasso regression
+    # for a in range(0,10):
+    # print("Lasso: alpha = ",a)
     clf = Lasso(alpha=alpha)
-    model = clf.fit(y = y, X = X)
+    model = clf.fit(X = X_train, y = y_train)
     # model.intercept_
-    return model.coef_
+    errors = test_predictions(model, X_test, y_test)
+    return model, model.coef_
 
 # Mutual Information Criterion
-def mutual_info(X, y):
+def mutual_info(X_train, X_test, y_train, y_test):
     def mutual_info_subset(X, y, mode='percentile', param=50):
         from sklearn.feature_selection import GenericUnivariateSelect
         trans = GenericUnivariateSelect(score_func=mutual_info_regression,
@@ -138,10 +172,54 @@ def mutual_info(X, y):
         return X_trans
 
     from sklearn.feature_selection import mutual_info_regression
-    coefs = mutual_info_regression(X, y)
-    return coefs
+    coefs = mutual_info_regression(X_train, y_train, n_neighbors=3)
+    return coef
 
-def ridge_regression(X, y):
+
+def plot_decision_tree(tree_small,
+                       feature_names=None,
+                       file_prefix="rf_tree"):
+    print("Creating decision tree plot ==> "+file_prefix+'.png')
+    if type(feature_names) != "list":
+        print("Creating default feature names.")
+        feature_names = ["Feature." + str(x + 1) for x in range(len(tree_small.feature_importances_))]
+    # Save the tree as a png image
+    export_graphviz(tree_small, out_file=file_prefix+'.dot', feature_names=feature_names, rounded=True, precision=1)
+    (graph,) = pydot.graph_from_dot_file(file_prefix+'.dot')
+    graph.write_png(file_prefix+'.png');
+
+def decision_tree(X_train, X_test, y_train, y_test,
+                  max_depth=6,
+                  feature_names=None,
+                  dt_plot=True):
+    from sklearn.tree import DecisionTreeRegressor, export_graphviz
+    clf =  DecisionTreeRegressor(max_depth=max_depth)
+    model = clf.fit(X_train, y_train)
+    Gini_importance = model.feature_importances_
+    errors = test_predictions(model, X_test, y_test)
+    if dt_plot:
+        plot_decision_tree(model, feature_names, file_prefix="dt_tree")
+    # regressor.decision_path(X)
+    return model, Gini_importance
+
+def random_forest(X_train, X_test, y_train, y_test,
+                  n_estimators=1000,
+                  max_depth=6,
+                  feature_names=None,
+                  dt_plot=True):
+    from sklearn.ensemble import RandomForestRegressor
+    # Instantiate model with 1000 decision trees
+    rf = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+    model = rf.fit(X_train, y_train)
+    errors = test_predictions(model, X_test, y_test)
+    Gini_importance = model.feature_importances_
+    if dt_plot:
+        # Extract the small tree
+        tree_small = model.estimators_[5]
+        plot_decision_tree(tree_small, feature_names, file_prefix="rf_tree")
+    return model, Gini_importance
+
+def ridge_regression(X_train, X_test, y_train, y_test):
     # ridge regression == L2-Regularization
     # A helper method for pretty-printing the coefficients
     def pretty_print_coefs(coefs, names=None, sort=False):
@@ -155,12 +233,13 @@ def ridge_regression(X, y):
 
     from sklearn.linear_model import Ridge
     ridge = Ridge(alpha=1.0)
-    ridge.fit(X, y)
+    model = ridge.fit(X_train, y_train)
     print("Ridge model:", pretty_print_coefs(ridge.coef_))
-    return ridge.coef_
+    errors = test_predictions(model, X_test, y_test)
+    return model, model.coef_
 
 # Multivariate Linear Regression
-def multivariate_regression(X, y):
+def linear_regression(X_train, X_test, y_train, y_test):
     from sklearn.linear_model import LinearRegression
     # from sklearn.preprocessing import PolynomialFeatures
     # Create interaction term (not polynomial features)
@@ -171,15 +250,18 @@ def multivariate_regression(X, y):
     # import statsmodels.api as sm
     # model  = sm.OLS(y, X).fit()
     # model.summary()
-    reg = LinearRegression().fit(X, y)
+    LR = LinearRegression()
+    model = LR.fit(X_train, y_train)
+    errors = test_predictions(model, X_test, y_test)
     # reg.score(X, y)
-    reg.intercept_
-    return reg.coef_
+    # model.intercept_
+    return model, model.coef_
 
 
 
 
-def var_weights(data, coefs, weight_label="coef"):
+def feature_weights(data, coefs, weight_label="coef"):
+    print("Creating feature weights dataframe.")
     weights = pd.DataFrame({weight_label: coefs},
                                        index=data.columns[data.columns != "Diabetes"])
     weights.sort_values(by=weights.columns[0], ascending=False, inplace=True)
@@ -191,38 +273,64 @@ def weights_plot(weights):
     sns.barplot(x=weights.iloc[:,0], y=weights.index, palette=pal)
     plt.show()
 
-def weight_features(data, test_size=0.3, method="multivariate_regression", plot_weights=True):
-    X_train, X_test, y_train, y_test = data_split(data, y_var="Diabetes", test_size=test_size)
-    X = X_train.copy()
-    y = y_train.copy()
-    if method=="lasso":
-        coefs = lasso(X, y)
-    if method=="mutual_info":
-        coefs = mutual_info(X, y)
-    if method=="ridge_regression":
-        coefs = ridge_regression(X, y)
-    if method=="multivariate_regression":
-        coefs = multivariate_regression(X, y)
-    # Label coefs
-    weights = var_weights(data, coefs=coefs, weight_label=method+"_coef")
-    if plot_weights:
-        weights_plot(weights)
-    return weights
 
-def prepare_polar(data, weights, stcotr_fips=36119005702, n_factors=5):
-    dat_sub = pd.DataFrame(data.loc[stcotr_fips]).copy()
-    merged = dat_sub.merge(weights, on="metric_name")
-    merged.sort_values(by=[dat_sub.columns[0]], ascending=False, inplace=True)
-    merged["Risk Score"] = merged.iloc[:, 0] * merged.iloc[:, 1]
-    polar_data = merged.iloc[0:n_factors,]
-    polar_data = polar_data.reset_index()
-    return polar_data
+def min_max_scores(data, weights):
+    from math import ceil, floor
+    # min
+    minScore_df = pd.concat([data.min()[weights.index], weights], axis=1)
+    minScore_df["Score"] = minScore_df.iloc[:, 0] * minScore_df.iloc[:, 1]
+    min_score = floor(minScore_df["Score"].min())
+    # max
+    maxScore_df = pd.concat([data.max()[weights.index], weights], axis=1)
+    maxScore_df["Score"] = maxScore_df.iloc[:, 0] * maxScore_df.iloc[:, 1]
+    max_score = ceil(maxScore_df["Score"].max())
+    return {"min":min_score,"max":max_score}
+
+def train_model(data, test_size=0.3, method="random_forest", plot_weights=True):
+    print("Training Model:",method)
+    X_train, X_test, y_train, y_test = data_split(data, y_var="Diabetes", test_size=test_size)
+    feature_names = data.columns[data.columns != "Diabetes"]
+    if method=="lasso":
+        model, coefs = lasso(X_train, X_test, y_train, y_test, alpha=1)
+    if method=="mutual_info":
+        coefs = mutual_info(X_train, X_test, y_train, y_test)
+        model=None
+    if method=="decision_tree":
+        model, coefs = decision_tree(X_train, X_test, y_train, y_test,
+                                    max_depth=6,
+                                    feature_names=feature_names,
+                                    dt_plot=False)
+    if method=="random_forest":
+        # Accuracy plateua's around max_depth=10
+        model, coefs = random_forest(X_train, X_test, y_train, y_test,
+                              max_depth=8,
+                              n_estimators=1000,
+                              feature_names=feature_names,
+                              dt_plot=False)
+    if method=="ridge_regression":
+        model, coefs = ridge_regression(X_train, X_test, y_train, y_test)
+    if method=="linear_regression":
+        model, coefs = linear_regression(X_train, X_test, y_train, y_test)
+    return model, coefs
 
 
 
 ######################################
 ################## PLOTS #############
 ######################################
+
+def prepare_polar(data, weights, stcotr_fips=36119005702, n_factors=5):
+    print("Calculating Risk Scores...")
+    dat_sub = pd.DataFrame(data.loc[stcotr_fips]).copy()
+    merged = dat_sub.merge(weights, on="metric_name")
+    # Create Risk Score col
+    merged["Risk Score"] = merged.iloc[:, 0] * merged.iloc[:, 1]
+    print("Sorting values by",merged.columns[1]+".")
+    merged.sort_values(by=[merged.columns[1]], ascending=False, inplace=True)
+    # Sort according to highest weight
+    polar_data = merged.iloc[0:n_factors,]
+    polar_data = polar_data.reset_index()
+    return polar_data
 
 def polar_plotly(polar_data):
     # Standard plotly
@@ -317,17 +425,19 @@ def tsne(data, perplexity=30, hue_var="Diabetes"):
 
 # if __name__ == "__main__":
 def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv", raw=False):
-    print("Initializing CityHealth code.")
+
     ##### stcotr_fips = (Concatenation of state, county and tract FIPS codes)
     data_raw = pd.read_csv(data_path)
     if raw:
+        print("Returning raw CityHealth data.")
         return raw
     else:
+        print("Preprocessing CityHealth data (pivot ==> dropna => normalize).")
         data = pivot_dropna(data_raw)
-        data = normalize(data)
+        # data.describe()
+        data = normalize(data, label="Diabetes")
         # X_train, X_test, y_train, y_test = data_split(data)
-        # X = X_train.copy()
-        # y = y_train.copy()
-        # weights = weight_features(X, y, method="multivariate_regression", plot_weights=True)
-        # return X_train, X_test, y_train, y_test
         return data
+
+
+# features = pd.get_dummies(["A","T","C","G"])

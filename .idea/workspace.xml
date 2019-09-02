@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a9521d71-26a1-4a51-b90c-6e524f7512ff" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Code/CityHealth/radial_plots.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" beforeDir="false" afterPath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -125,7 +124,7 @@
       <workItem from="1567391422309" duration="19000" />
       <workItem from="1567391458355" duration="4069000" />
       <workItem from="1567395859634" duration="1460000" />
-      <workItem from="1567397360190" duration="4384000" />
+      <workItem from="1567397360190" duration="26250000" />
     </task>
     <servers />
   </component>
