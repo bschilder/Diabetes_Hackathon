@@ -11,12 +11,13 @@ from dash.dependencies import Input, Output
 from flask import Flask
 from flask_flatpages import FlatPages
 from flask_frozen import Freezer
+from flask import request, after_this_request
 
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
 
 method="linear_regression"
-data_raw = CH.preprocess_data(raw=True)
+# data_raw = CH.preprocess_data(raw=True)
 data = CH.preprocess_data()
 city_average = round(data["Diabetes"].mean(),1)
 #Train model on data
@@ -37,12 +38,15 @@ n_factors_dict = [dict(label=x, value=x) for x in factor_range]
 col_options = [tract_dict, n_factors_dict]
 dropdowns = ["Tract", "N_Factors"]
 
+
 # By exposing this server variable, you can deploy Dash apps like you would any Flask app
-server = flask.Flask(__name__)
+server = Flask(__name__)
 app = dash.Dash(
-    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],server=server
+    __name__,
+    external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
+    server=server
 )
-# app.config.get('project/settings.py')# .from_pyfile('project/settings.py')
+
 
 app.layout = html.Div(
     [
@@ -55,7 +59,7 @@ app.layout = html.Div(
         html.Div(
             [html.Br(),
              html.Label(["Tract :"]),
-             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=36119005702)]),
+             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=36085032300)]),
              html.Br(),
              html.Label(["Number of Risk Factors :"]),
              html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
@@ -120,13 +124,14 @@ def make_figure(Tract, n_factors):
 
 
 # Freeze flask!
-pages = FlatPages(app)
-freezer = Freezer(app)
+# pages = FlatPages(server)
+# freezer = Freezer(server)
+# server.config.from_pyfile('project/settings.py')
 # Save a list of all requirements for THIS repo only
 # system("pipreqs --force ./")
 
 if __name__ == '__main__':
-    DEBUG = False
+    DEBUG = True
     # Debug mode
     if DEBUG:
         app.run_server(debug=True)

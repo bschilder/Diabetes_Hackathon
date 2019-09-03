@@ -14,12 +14,14 @@ def parent_dir(path):
     return os.path.abspath(os.path.join(path, os.pardir))
 
 PROJECT_ROOT = parent_dir(APP_DIR)
+print("PROJECT_ROOT:",PROJECT_ROOT)
 # In order to deploy to Github pages, you must build the static files to
 # the project root
 FREEZER_DESTINATION = PROJECT_ROOT
 # Since this is a repo page (not a Github user page),
 # we need to set the BASE_URL to the correct url as per GH Pages' standards
 FREEZER_BASE_URL = "http://localhost/{0}".format(REPO_NAME)
+print(FREEZER_BASE_URL)
 FREEZER_REMOVE_EXTRA_FILES = False  # IMPORTANT: If this is True, all app files
                                     # will be deleted when you run the freezer
 FLATPAGES_MARKDOWN_EXTENSIONS = ['codehilite']

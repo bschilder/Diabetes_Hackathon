@@ -332,7 +332,7 @@ def train_model(data, test_size=0.3, method="random_forest", plot_weights=True):
 ################## PLOTS #############
 ######################################
 
-def prepare_polar(data, weights, stcotr_fips=36119005702, n_factors=5):
+def prepare_polar(data, weights, stcotr_fips=36085032300, n_factors=5):
     print("Calculating Risk Scores...")
     dat_sub = pd.DataFrame(data.loc[stcotr_fips]).copy()
     merged = dat_sub.merge(weights, on="metric_name")
@@ -437,10 +437,14 @@ def tsne(data, perplexity=30, hue_var="Diabetes"):
 
 
 # if __name__ == "__main__":
-def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv", raw=False):
+def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv",
+                    raw=False,
+                    NYC_only=True):
 
     ##### stcotr_fips = (Concatenation of state, county and tract FIPS codes)
     data_raw = pd.read_csv(data_path)
+    if NYC_only:
+        data_raw = data_raw.loc[data_raw.city_name=="New York",:]
     if raw:
         print("Returning raw CityHealth data.")
         return raw
