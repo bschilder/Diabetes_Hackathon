@@ -2,19 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a9521d71-26a1-4a51-b90c-6e524f7512ff" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_city_NY v6_0.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/READ ME City Health Dashboard Downloadable Data Codebook v6.0 - 6.12.19.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Diabetes_Hackathon.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Diabetes_Hackathon.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" beforeDir="false" afterPath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/pages/bacon.md" beforeDir="false" afterPath="$PROJECT_DIR$/project/pages/bacon.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/views.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -143,7 +133,7 @@
       <workItem from="1567473429717" duration="4238000" />
       <workItem from="1568247747854" duration="1149000" />
       <workItem from="1569277668327" duration="4198000" />
-      <workItem from="1569288923036" duration="1758000" />
+      <workItem from="1569288923036" duration="2453000" />
     </task>
     <servers />
   </component>

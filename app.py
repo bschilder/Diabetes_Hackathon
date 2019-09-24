@@ -42,6 +42,8 @@ dropdowns = ["Tract", "N_Factors"]
 # By exposing this server variable, you can deploy Dash apps like you would any Flask app
 server = Flask(__name__, template_folder="project/templates", static_folder="project/static", )
 server.config.from_pyfile('project/settings.py')
+server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+
 
 app = dash.Dash(
     __name__,
@@ -133,8 +135,11 @@ freezer = Freezer(server)
 # system("pipreqs --force ./")
 
 if __name__ == '__main__':
-    freezer.freeze()
-    DEBUG = True
+    # freezer.freeze()
     # Debug mode
-    if DEBUG:
-        freezer.run(debug=True)
+    # DEBUG = True
+    # if DEBUG:
+    #     freezer.run(debug=True)
+    app.server.run(debug=True, threaded=True)
+
+
