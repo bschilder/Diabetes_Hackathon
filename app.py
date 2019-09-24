@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from grpc import StatusCode
 
 import Code.CityHealth.CityHealth as CH
 from os import system
@@ -16,7 +16,7 @@ from flask import request, after_this_request
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
 
-method="linear_regression"
+method="ridge_regression"
 # data_raw = CH.preprocess_data(raw=True)
 data = CH.preprocess_data()
 city_average = round(data["Diabetes"].mean(),1)
@@ -40,11 +40,15 @@ dropdowns = ["Tract", "N_Factors"]
 
 
 # By exposing this server variable, you can deploy Dash apps like you would any Flask app
-server = Flask(__name__)
+server = Flask(__name__, template_folder="project/templates", static_folder="project/static", )
+server.config.from_pyfile('project/settings.py')
+
 app = dash.Dash(
     __name__,
     external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
-    server=server
+    server=server,
+    routes_pathname_prefix="/"
+    # url_base_pathname="Diabetes_Hackathon/"
 )
 
 
@@ -122,16 +126,15 @@ def make_figure(Tract, n_factors):
     paper_bgcolor = "rgba(0,0,0,0)"
 )
 
-
 # Freeze flask!
-# pages = FlatPages(server)
-# freezer = Freezer(server)
-# server.config.from_pyfile('project/settings.py')
+pages = FlatPages(server)
+freezer = Freezer(server)
 # Save a list of all requirements for THIS repo only
 # system("pipreqs --force ./")
 
 if __name__ == '__main__':
+    freezer.freeze()
     DEBUG = True
     # Debug mode
     if DEBUG:
-        app.run_server(debug=True)
+        freezer.run(debug=True)

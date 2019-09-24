@@ -27,3 +27,5 @@ FREEZER_REMOVE_EXTRA_FILES = False  # IMPORTANT: If this is True, all app files
 FLATPAGES_MARKDOWN_EXTENSIONS = ['codehilite']
 FLATPAGES_ROOT = os.path.join(APP_DIR, 'pages')
 FLATPAGES_EXTENSION = '.md'
+
+SECRET_KEY = "DiaBEETUS"

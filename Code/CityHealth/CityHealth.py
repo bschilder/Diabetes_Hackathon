@@ -435,7 +435,6 @@ def tsne(data, perplexity=30, hue_var="Diabetes"):
 
 
 
-
 # if __name__ == "__main__":
 def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv",
                     raw=False,

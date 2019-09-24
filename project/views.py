@@ -1,14 +1,14 @@
 from flask import render_template
-from app import pages, server
+from app import pages, server, freezer, app
 # from app import server as app
 
-@server.route('/')
+@server.route('/dasher/')
 def home():
-    posts = [page for page in pages if 'date' in page.meta]
-    # Sort pages by date
-    sorted_posts = sorted(posts, reverse=True,
-        key=lambda page: page.meta['date'])
-    return render_template('index.html', pages=sorted_posts)
+    return render_template('index.html', dasher=app)
+
+@freezer.register_generator
+def product_details():
+        return render_template('index.html', dasher=app)
 
 @server.route('/<path:path>/')
 def page(path):
