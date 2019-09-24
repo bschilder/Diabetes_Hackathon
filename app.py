@@ -2,7 +2,9 @@
 from grpc import StatusCode
 
 import Code.CityHealth.CityHealth as CH
-from os import system
+from os import system, environ
+from random import randint
+
 import plotly_express as px
 import dash
 import dash_html_components as html
@@ -12,6 +14,7 @@ from flask import Flask
 from flask_flatpages import FlatPages
 from flask_frozen import Freezer
 from flask import request, after_this_request
+
 
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
@@ -42,7 +45,7 @@ dropdowns = ["Tract", "N_Factors"]
 # By exposing this server variable, you can deploy Dash apps like you would any Flask app
 server = Flask(__name__, template_folder="project/templates", static_folder="project/static", )
 server.config.from_pyfile('project/settings.py')
-server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+server.secret_key = environ.get('secret_key', str(randint(0, 1000000)))
 
 
 app = dash.Dash(
@@ -71,7 +74,22 @@ app.layout = html.Div(
              html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
             style={"width": "25%", "float": "left"},
         ),
-        dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"}),
+        dcc.Loading([
+            dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"})
+        ]),
+        html.Div([html.Div([html.H5(["Who"]),
+                      html.H4(["Is this?"]),
+                      html.P(["This application is made for..."])
+                    ]),
+                  html.Div([html.H5(["What"]),
+                      html.H4(["Is this tool intended for?"]),
+                      html.P(["This application in made for..."])
+                    ])
+                  html.Div([html.H5(["When"]),
+                      html.H4(["...does this data cover?"]),
+                      html.P(["This application in made for..."])
+                    ])
+                  ])
     ], style={"padding":"20px"}
 )
 
