@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from grpc import StatusCode
-
 import Code.CityHealth.CityHealth as CH
 from os import system, environ
 from random import randint
@@ -159,5 +157,3 @@ if __name__ == '__main__':
     # if DEBUG:
     #     freezer.run(debug=True)
     app.server.run(debug=True, threaded=True)
-
-
