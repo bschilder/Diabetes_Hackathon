@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # from grpc import StatusCode
 
 import Code.CityHealth.CityHealth as CH
@@ -174,9 +175,9 @@ freezer = Freezer(server)
 if __name__ == '__main__':
     # freezer.freeze()
     # Debug mode
+
     DEBUG = True
     if DEBUG:
         # freezer.run(debug=True)
         app.server.run(debug=True, threaded=True)
-
 
