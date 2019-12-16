@@ -28,7 +28,7 @@ overall_average = round(data["Diabetes"].mean(),1)
 
 #Train model on data
 method="ridge_regression"
-model, coefs = CH.train_model(data, test_size=0.3, method='linear_regression', plot_weights=False)
+model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
 
 # Label coefs
 weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
