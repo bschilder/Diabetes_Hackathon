@@ -2,7 +2,7 @@
 
 # from grpc import StatusCode
 
-import Code.CityHealth.CityHealth as CH
+import Code.cityhealth.CityHealth as CH
 from os import system, environ
 from random import randint
 

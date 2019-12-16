@@ -552,7 +552,7 @@ def run_umap(data_raw, hue_var="Diabetes"):
 
 
 # if __name__ == "__main__":
-def preprocess_data(data_path="Code/CityHealth/Data/CHDB_data_tract_all_v7_1.csv.gz",
+def preprocess_data(data_path="data/cityhealth/CHDB_data_tract_all_v7_1.csv.gz",
                     raw=False,
                     NYC_only=False,
                     impute=False):
