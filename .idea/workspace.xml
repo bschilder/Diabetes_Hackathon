@@ -3,6 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a9521d71-26a1-4a51-b90c-6e524f7512ff" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" beforeDir="false" afterPath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_city_NY v6_0.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code/CityHealth/Data/New York v6.0 - released June 12, 2019/READ ME City Health Dashboard Downloadable Data Codebook v6.0 - 6.12.19.pdf" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -39,12 +43,6 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="176" />
-    <option name="y" value="23" />
-    <option name="width" value="1239" />
-    <option name="height" value="877" />
   </component>
   <component name="ProjectId" id="1QGKIuQ9nkIhyQW8pT6KzpoqG9K" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -132,7 +130,10 @@
       <workItem from="1567473429717" duration="4238000" />
       <workItem from="1568247747854" duration="1149000" />
       <workItem from="1569277668327" duration="4198000" />
-      <workItem from="1569288923036" duration="4059000" />
+      <workItem from="1569288923036" duration="4241000" />
+      <workItem from="1570032894718" duration="16000" />
+      <workItem from="1575836940416" duration="20955000" />
+      <workItem from="1575951057612" duration="5650000" />
     </task>
     <servers />
   </component>

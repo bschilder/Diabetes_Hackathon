@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from grpc import StatusCode
+# from grpc import StatusCode
 
 import Code.CityHealth.CityHealth as CH
 from os import system, environ
@@ -10,6 +10,8 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
+# from html.parser import HTMLParser 
+
 from flask import Flask
 from flask_flatpages import FlatPages
 from flask_frozen import Freezer
@@ -19,31 +21,39 @@ from flask import request, after_this_request
 # original example
 ## https://github.com/plotly/dash-px/blob/master/app.py
 
-method="ridge_regression"
 # data_raw = CH.preprocess_data(raw=True)
-data = CH.preprocess_data()
-city_average = round(data["Diabetes"].mean(),1)
+data = CH.preprocess_data(impute=True)
+overall_average = round(data["Diabetes"].mean(),1)
+
 #Train model on data
-model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
+method="ridge_regression"
+model, coefs = CH.train_model(data, test_size=0.3, method='linear_regression', plot_weights=False)
+
 # Label coefs
 weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
-polar_data = CH.prepare_polar(data, weights, n_factors=5)
+polar_data = CH.prepare_polar(data, weights, stcotr_fips=data.index[0], n_factors=5)
 # CH.weights_plot(weights)
 # Find mix/max for radar plot
 min_max = CH.min_max_scores(data, weights)
 
-# Tract options
+# Dropdown options
+## Tract
 tract_dict = [dict(label=x, value=x) for x in data.index]
-# N factors options
+## N factors
 factor_range = list(range(1,len(data.columns)))
 n_factors_dict = [dict(label=x, value=x) for x in factor_range]
+## State
+state_dict = [dict(label=x, value=x) for x in ["All States"]+data.state_abbr.unique().tolist()]
+## City
+city_dict = [dict(label=x, value=x) for x in ["All Cities"]+data.city_name.unique().tolist()]
+
 
 col_options = [tract_dict, n_factors_dict]
-dropdowns = ["Tract", "N_Factors"]
+dropdowns = ["Tract", "N_Factors", "State", "City"]
 
 
 # By exposing this server variable, you can deploy Dash apps like you would any Flask app
-server = Flask(__name__, template_folder="project/templates", static_folder="project/static", )
+server = Flask(__name__, template_folder="project/templates", static_folder="project/static")
 server.config.from_pyfile('project/settings.py')
 server.secret_key = environ.get('secret_key', str(randint(0, 1000000)))
 
@@ -64,44 +74,53 @@ app.layout = html.Div(
                  html.H5(["Select the community (a.k.a. Tract) of interest below."]),
                  html.H5(["On the right, a radar plot will display the Risk Profile of that Tract."])
                   ],
-                 style={"width": "60%"}),
+                 style={"width": "60%"}, id="Instructions"
+        ),
         html.Div(
             [html.Br(),
              html.Label(["Tract :"]),
-             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=36085032300)]),
+             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=data.index[0])]),
              html.Br(),
              html.Label(["Number of Risk Factors :"]),
-             html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)])],
-            style={"width": "25%", "float": "left"},
+             html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)]),
+             html.Br(),
+             html.Label(["State :"]),
+             html.P([dcc.Dropdown(id="State", options=state_dict, value="All States")]),
+             html.Br(),
+             html.Label(["City :"]),
+             html.P([dcc.Dropdown(id="City", options=city_dict, value="All Cities")])],
+            style={"width": "25%", "float": "left"}, id="Dropdowns"
         ),
         dcc.Loading([
             dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"})
         ]),
-        html.Div([html.Div([html.H5(["Who"]),
-                      html.H4(["Is this?"]),
+        html.Div([html.Div([html.Span([html.H5("Who is this application made for?")]),
                       html.P(["This application is made for..."])
                     ]),
-                  html.Div([html.H5(["What"]),
-                      html.H4(["Is this tool intended for?"]),
-                      html.P(["This application in made for..."])
+                  html.Div([html.H5(["What can this tool do?"]),
+                      html.P(["This application is made for..."])
+                    ]),
+                  html.Div([html.H5(["When does this data cover?"]),
+                      html.P(["This application is made for..."])
                     ])
-                  html.Div([html.H5(["When"]),
-                      html.H4(["...does this data cover?"]),
-                      html.P(["This application in made for..."])
-                    ])
-                  ])
+                  ], id="About"
+                 )
     ], style={"padding":"20px"}
 )
 
 
 @app.callback(Output("graph", "figure"), [Input(d, "value") for d in dropdowns])
-def make_figure(Tract, n_factors):
+def make_figure(Tract, n_factors, State, City):
+    # if State!="All States":
+    #     data = data.loc[data.state_abbr==State]
+    # if City!="All Cities":
+    #     data = data.loc[data.city_name==City]
     polar_data = CH.prepare_polar(data, weights, stcotr_fips=Tract, n_factors=n_factors)
-    predicted, actual = CH.predict_value(model, data, stcotr_fips=Tract, label_var="Diabetes")
+    predicted, actual = CH.predict_value(model, data, stcotr_fips=Tract, y_var="Diabetes")
     title = "% of Community with Diabetes:<br>"+\
             "  Predicted = " + str(round(predicted,1)) + " %<br>"+ \
-            "  Actual = " + str(actual) + " %<br>"+\
-            "  City Average = "+str(city_average)+" %"
+            "  Actual = " + str(round(actual,1)) + " %<br>"+\
+            "  Average = "+str(overall_average)+" %"
     return px.line_polar(
         polar_data,
         r="Risk Score",
@@ -155,9 +174,9 @@ freezer = Freezer(server)
 if __name__ == '__main__':
     # freezer.freeze()
     # Debug mode
-    # DEBUG = True
-    # if DEBUG:
-    #     freezer.run(debug=True)
-    app.server.run(debug=True, threaded=True)
+    DEBUG = True
+    if DEBUG:
+        # freezer.run(debug=True)
+        app.server.run(debug=True, threaded=True)
 
 

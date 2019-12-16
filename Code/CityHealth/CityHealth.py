@@ -56,31 +56,43 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from multiprocessing.dummy import Pool as ThreadPool
 
 
 #--------------------------------------------------------------#
 #------------------- Data Preprocessing -----------------------#
 #--------------------------------------------------------------#
 
-def geo_api(city, state):
+def geo_api(state="all", city=False, token="6ad860a334109640f9abd53018d9bcb7"):
     import requests
-    base = "http://34.200.29.188/api/data/geographic-identifier?token="
-    api_key = "6ad860a334109640f9abd53018d9bcb7"
-    city_name  = "&city_name="+city
-    state_abbr = "&state_abbr="+state
-    full_api = (base+api_key+city_name+state_abbr).replace(" ","%20")
+    # base = "http://34.200.29.188/api/data/geographic-identifier?token=" # old API
+    base="https://api.cityhealthdashboard.com/api/data/geographic-identifier?token="
+    if city:
+        city_name = "&city_name="+city
+    else:
+        city_name=""
+    if state!="":
+        state_abbr = "&state_abbr="+state
+    else:
+        state_abbr=""
+    full_api = (base+token+city_name+state_abbr).replace(" ","%20")
     r = requests.get(full_api)
     j = r.json()
     # j['fields']
     # j['metrics']
     data = pd.DataFrame(j['rows'])
     return data
-# geo_data = geo_api("New York","NY")
+# geo_data = geo_api(city="New York", state="NY")
 
+def all_cities_states(data_path="Code/CityHealth/Data/CHDB_data_city_all v7_1.csv.gz"):
+    dat = pd.read_csv(data_path)
+    return dat
 
 def tract_api(state, city=False, token="6ad860a334109640f9abd53018d9bcb7"):
+    print("Requesting data from",state)
     import requests
-    base = "http://34.200.29.188/api/data/tract-metric"
+    # base = "http://34.200.29.188/api/data/tract-metric" # old API
+    base = "https://api.cityhealthdashboard.com/api/data/tract-metric"
     token_key = "?token="+token
     # Get metrics
     j = requests.get(base+token_key).json()
@@ -102,33 +114,72 @@ def tract_api(state, city=False, token="6ad860a334109640f9abd53018d9bcb7"):
     return data
 # data = tract_api(state="NY")
 
-def normalize(data, label="Diabetes"):
+
+def multithread(func, items):
+    import time
+    start = time.time()
+    pool = ThreadPool(4)
+    results = pool.map(func, items)
+    pool.close()
+    pool.join()
+    end = time.time()
+    print(len(items),"items extracted in", round(end - start, 2), "seconds.")
+    df = pd.concat(results)
+    return df
+
+
+def tract_api_multistate(states="all", save_path="./Code/CityHealth/Data/CityHealth_data.csv.gz"):
+    if states=="all":
+        geo_dat = all_cities_states()
+        states = geo_dat.state_abbr.unique()
+    df = multithread(func=tract_api, items=states)
+    if save_path!=False:
+        df.to_csv(save_path)
+    return df
+
+
+def pivot_handleNA(data_raw, impute=False):
+    from sklearn.preprocessing import StandardScaler
+    # [1] Pivot
+    data_pivot = data_raw.loc[:, ["state_abbr","city_name","stcotr_fips", "metric_name", "est"]].reset_index()\
+        .pivot_table(index=['state_abbr','city_name','stcotr_fips'], columns='metric_name',values='est').reset_index()
+    data_pivot.index = data_pivot['stcotr_fips']
+    before = data_pivot.shape[0]
+    # [2] Drop NAs
+    all_fields = [x for x in data_raw.metric_name.unique() if x != "Walkability"]
+    if impute:
+        print("+ Imputing missing values...")
+
+        # Tutorial: https://scikit-learn.org/stable/modules/impute.html
+        from sklearn.impute import SimpleImputer
+        imputer = SimpleImputer(strategy="mean")
+        data_pivot[all_fields] = imputer.fit_transform( data_pivot[all_fields] )
+    else:
+        print("+ Dropping missing values...")
+        data_pivot = data_pivot.dropna()
+        print(before-data_pivot.shape[0],"/",data_pivot.shape[0],"tracts dropped after filtering NAs.")
+    return data_pivot
+
+
+def normalize(data, y_var="Diabetes"):
     # Normalize all columns except the label ("Diabetes")
     # to maintain interpretability of Diabetes predictions.
     from sklearn.preprocessing import StandardScaler
     data_norm = data.copy()
-    features = data.loc[:,data.columns!=label]
-    data_norm.loc[:,data_norm.columns!=label] = StandardScaler().fit_transform(features)
+    id_vars = [y_var, "state_abbr", "city_name", "stcotr_fips"]
+    features = data.loc[:,~data.columns.isin(id_vars)]
+    data_norm.loc[:,~data_norm.columns.isin(id_vars)] = StandardScaler().fit_transform(features)
     # MinMaxScaler()
     return data_norm
-
-def pivot_dropna(data):
-    from sklearn.preprocessing import StandardScaler
-    # [1] Pivot
-    data_pivot = data.loc[:, ["stcotr_fips", "metric_name", "est"]]\
-        .pivot(index='stcotr_fips', columns='metric_name',values='est')
-    # [2] Drop NAs
-    data_pivot.drop(["Walkability"], axis=1, inplace=True)
-    data_pivot = data_pivot.dropna()
-    return data_pivot
 
 
 def data_split(data, y_var="Diabetes", test_size=0.3):
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import LabelEncoder
     lab_enc = LabelEncoder()
+    id_vars=[y_var,"state_abbr","city_name","stcotr_fips"]
     # Tranform into array for computational speedup
-    X = np.array(data.loc[:,data.columns!=y_var])
+    X = np.array(data.loc[:,~data.columns.isin(id_vars)])
     y = np.array(data.loc[:,y_var])
     # Fix continuous issue
     # X = np.array([lab_enc.fit_transform(x) for x in X])
@@ -158,10 +209,11 @@ def test_predictions(model, X_test, y_test):
     print('Accuracy:', round(accuracy, 4), '%.')
     return errors
 
-def predict_value(model, data, stcotr_fips, label_var="Diabetes"):
+def predict_value(model, data, stcotr_fips, y_var="Diabetes"):
     data_sub = data.loc[stcotr_fips].copy()
-    X = np.array(data_sub[data_sub.index!=label_var]).reshape(1, -1)
-    y = np.array(data_sub[label_var])
+    id_vars = [y_var, "state_abbr", "city_name", "stcotr_fips"]
+    X = np.array(data_sub[~data_sub.index.isin(id_vars)]).reshape(1, -1)
+    y = np.array(data_sub[y_var])
     actual = float(y)
     predicted = model.predict(X)
     return float(predicted), actual
@@ -276,10 +328,11 @@ def linear_regression(X_train, X_test, y_train, y_test):
 
 
 
-def feature_weights(data, coefs, weight_label="coef"):
+def feature_weights(data, coefs, weight_label="coef", y_var="Diabetes"):
     print("Creating feature weights dataframe.")
+    id_vars = [y_var, "state_abbr", "city_name", "stcotr_fips"]
     weights = pd.DataFrame({weight_label: coefs},
-                                       index=data.columns[data.columns != "Diabetes"])
+                                       index=data.columns[~data.columns.isin(id_vars)])
     weights.sort_values(by=weights.columns[0], ascending=False, inplace=True)
     return weights
 
@@ -335,8 +388,9 @@ def train_model(data, test_size=0.3, method="random_forest", plot_weights=True):
 ################## PLOTS #############
 ######################################
 
-def prepare_polar(data, weights, stcotr_fips=36085032300, n_factors=5):
+def prepare_polar(data, weights, stcotr_fips, n_factors=5):
     print("Calculating Risk Scores...")
+    # stcotr_fips = 36085032300
     dat_sub = pd.DataFrame(data.loc[stcotr_fips]).copy()
     merged = dat_sub.merge(weights, on="metric_name")
     # Create Risk Score col
@@ -396,23 +450,25 @@ def facet_scatter(data_raw):
     plt.show()
 
 
-def plot_PCA(data, hue_var="Diabetes"):
+def plot_PCA(data_raw, hue_var="Diabetes"):
     from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
     # Pivot & clean
-    data_clean = pivot_dropna(data)
+    data_clean = pivot_handleNA(data_raw)
     # Separating out the features
     # x = data_clean.drop(["Diabetes"], axis=1).values
     # # Separating out the target
     # y = data_clean.loc[:, ['Diabetes']].values
     # Standardizing the features
-    x = StandardScaler().fit_transform(data_clean)
+    id_vars = ["state_abbr", "city_name", "stcotr_fips"]
+    x = StandardScaler().fit_transform( data_clean.loc[:,~data_clean.columns.isin(id_vars)] )
 
     pca = PCA(n_components=3)
     principalComponents = pca.fit_transform(x)
     principalDf = pd.DataFrame(principalComponents, columns = ["PC1","PC2","PC3"], index=data_clean.index)
     finalDf = pd.concat([principalDf, data_clean], axis=1)
 
-    sn.scatterplot(data=finalDf, x="PC1", y="PC2", hue=hue_var)
+    sns.scatterplot(data=finalDf, x="PC1", y="PC2", hue=hue_var)
     plt.show()
 
     loadings = pd.DataFrame(data=pca.components_,
@@ -426,23 +482,80 @@ def plot_PCA(data, hue_var="Diabetes"):
     print(pca.explained_variance_ratio_)
     return finalDf
 
-def tsne(data, perplexity=30, hue_var="Diabetes"):
+def tsne(data_raw, perplexity=30, hue_var="Diabetes"):
     from sklearn.manifold import TSNE
-    data_clean = pivot_dropna(data)
-    X_embedded = TSNE(n_components=3, perplexity=perplexity).fit_transform(data_clean)
+    from sklearn.preprocessing import StandardScaler
+    # Prep data
+    data_clean = pivot_handleNA(data_raw)
+    id_vars = ["state_abbr", "city_name", "stcotr_fips"]
+    x = StandardScaler().fit_transform(data_clean.loc[:, ~data_clean.columns.isin(id_vars)])
+    # t-SNE
+    X_embedded = TSNE(n_components=3, perplexity=perplexity).fit_transform(x)
     tsneDF = pd.DataFrame(X_embedded, index=data_clean.index, columns=["tSNE1","tSNE2","tSNE3"])
     tsneDF = pd.concat([tsneDF, data_clean], axis=1)
     sns.scatterplot(data=tsneDF, x="tSNE1", y="tSNE2", hue=hue_var)
     plt.show()
     return tsneDF
 
+def run_umap(data_raw, hue_var="Diabetes"):
+    import umap
+    from sklearn.preprocessing import StandardScaler
+    # Prep data
+    data_clean = pivot_handleNA(data_raw, impute=True)
+    id_vars = ["state_abbr", "city_name", "stcotr_fips"]
+    x = StandardScaler().fit_transform(data_clean.loc[:, ~data_clean.columns.isin(id_vars)])
+    # UMAP
+    reducer = umap.UMAP(n_components=3, random_state=2019)
+    embedding = reducer.fit_transform(x)
+    embedding.shape
+
+    # sns.scatterplot(x=embedding[:, 0], y=embedding[:, 1], hue=data_clean["Diabetes"], )
+    umap_dims = pd.DataFrame(embedding, columns=["UMAP"+str(i+1) for i in range(0,embedding.shape[1])]  )
+    data_clean.index = range(0,data_clean.shape[0])
+    dat = pd.concat([data_clean, umap_dims], axis=1)
+
+    # Facet plot
+    ## Seaborn
+    g = sns.FacetGrid(data=dat, hue="est", col="metric_name")
+    g = g.map(plt.scatter, x="UMAP1", y="UMAP2")
+    plt.show()
+
+    # Plotly
+    ## https://plot.ly/python/line-and-scatter/
+    import plotly.express as px
+    from plotly.offline import plot
+
+    fig = px.scatter(dat, x="UMAP1", y="UMAP2", color=hue_var, hover_data=['UMAP1','UMAP2','state_abbr','city_name','stcotr_fips',hue_var], opacity=.75)
+    plot(fig)
+
+    # import pyggplot
+    # p = pyggplot.Plot(dat)
+    # p.add_scatter('UMAP1', 'UMAP2', color="est").facet_grid(facets="metric_name~.")
+    # p.render("image.png")
+
+    # Single plot
+    metrics = [x for x in data_raw.metric_name.unique() if x != "Walkability"]
+    for i in range(1, 7):
+        plt.subplot(2, 3, i)
+        plt.text(0.5, 0.5, str((2, 3, i)),
+                 fontsize=18, ha='center')
+    fig = plt.figure()
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    for i,hue_var in enumerate(metrics):
+        print(hue_var)
+        ax = fig.add_subplot(2, 3, i)
+        ax.scatter(x=embedding[:, 0], y=embedding[:, 1], c=data_clean[hue_var], s=.75)
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.title('UMAP:'+hue_var);
+        plt.colorbar()
+        plt.show()
 
 
 # if __name__ == "__main__":
-def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released June 12, 2019/CHDB_data_tract_NY v6_0.csv",
+def preprocess_data(data_path="Code/CityHealth/Data/CHDB_data_tract_all_v7_1.csv.gz",
                     raw=False,
-                    NYC_only=True):
-
+                    NYC_only=False,
+                    impute=False):
     ##### stcotr_fips = (Concatenation of state, county and tract FIPS codes)
     data_raw = pd.read_csv(data_path)
     if NYC_only:
@@ -452,9 +565,9 @@ def preprocess_data(data_path="./Code/CityHealth/Data/New York v6.0 - released J
         return raw
     else:
         print("Preprocessing CityHealth data (pivot ==> dropna => normalize).")
-        data = pivot_dropna(data_raw)
+        data = pivot_handleNA(data_raw, impute=impute)
         # data.describe()
-        data = normalize(data, label="Diabetes")
+        data = normalize(data, y_var="Diabetes")
         # X_train, X_test, y_train, y_test = data_split(data)
         return data
 
