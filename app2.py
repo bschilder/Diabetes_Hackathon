@@ -84,6 +84,11 @@ app.layout = html.Div([
             html.H2('Community View'),
             # html.Div(id='community_view_tract_shape'),
             html.Div([
+                dcc.Graph(id="community_view_tract_shape",
+                    # style={"width": "75%", "display": "inline-block"}
+                    )
+            ]),
+            html.Div([
                 html.H3(id='community_view_tract_id'),
                 html.H3(id='community_view_diabetes_rate'),
             ], style={'padding': '20 20'})
@@ -134,35 +139,44 @@ def update_tract_detail_summary(tract_map):
     return 'Tract: {}'.format(tract_id),'Diabetes rate: {}%'.format(diabetes_rate)
 
 # Plot chosen tract shape in Community View
-# @app.callback(
-#         Output('community_view_tract_shape', 'children'),
-#         [Input(component_id='tract_map', component_property='hoverData')]
-#     )
-# def update_tract_detail_summary(tract_map):
-#     ''' Plot tract shape in Community View summary '''
-#
-#     try:
-#         location = int(tract_map['points'][0]['location'])
-#         tract_id = int(geo.iloc[location]['fips_state_county_tract_code'])
-#
-#         fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
-#                 locations = [str(i) for i in geo.index.values],
-#                 z=1,
-#                 # colorscale=sequential.PuRd, zmin=0, zmax=12,
-#                 marker_opacity=0.5, marker_line_width=0)
-#             )
-#
-#         fig.update_layout(
-#                 mapbox_style="carto-positron",
-#                 mapbox_zoom=10,
-#                 mapbox_center = {"lat": 40.7410224, "lon": -73.9939661},
-#                 margin={"r":0,"t":0,"l":0,"b":0}
-#             )
-#
-#         return geo.iloc[location]['geometry']
-#     except:
-#         return None
+@app.callback(
+        Output('community_view_tract_shape', 'figure'),
+        [Input(component_id='tract_map', component_property='hoverData')]
+    )
+def update_tract_detail_summary(tract_map):
+    ''' Plot tract shape in Community View summary '''
 
+    try:
+        location = int(tract_map['points'][0]['location'])
+        geojson = gpd.GeoSeries(geo.iloc[location]['geometry']).__geo_interface__
+        lat = geo.iloc[location]['geometry'].centroid.x
+        long = geo.iloc[location]['geometry'].centroid.y
+    except:
+        location = 0
+        geojson = gpd.GeoSeries(geo.iloc[location]['geometry']).__geo_interface__
+        lat = 40.7410224
+        long = -73.9939661
+
+    fig = go.Figure(go.Choroplethmapbox(geojson=geojson,
+            locations = ['0'],
+            z=[10],
+            colorscale=sequential.PuRd, zmin=0, zmax=12,
+            marker_opacity=0.5, marker_line_width=0, showscale=False)
+        )
+
+    fig.update_layout(
+            mapbox_style="carto-positron",
+            mapbox_zoom=12,
+            mapbox_center = {"lat": lat, "lon": long},
+            margin={"r":0,"t":0,"l":0,"b":0},
+            autosize=False,
+            width=150,
+            height=150,
+            showlegend=False,
+
+        )
+
+    return fig
 
 # Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
@@ -197,7 +211,7 @@ def generate_spider_plot(tract_map, n_factors=6):
     tract_id = int(geo.iloc[location]['fips_state_county_tract_code'])
 
     polar_data = CH.prepare_polar(data, weights, stcotr_fips=tract_id, n_factors=n_factors)
-    predicted, actual = CH.predict_value(model, data, stcotr_fips=tract_id, label_y="Diabetes")
+    predicted, actual = CH.predict_value(model, data, stcotr_fips=tract_id, y_var="Diabetes")
     title = "% of Community with Diabetes:<br>"+\
             "  Predicted = " + str(round(predicted,1)) + " %<br>"+ \
             "  Actual = " + str(actual) + " %<br>"+\
