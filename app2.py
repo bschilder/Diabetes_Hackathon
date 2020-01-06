@@ -37,6 +37,9 @@ min_max = CH.min_max_scores(data, weights)
 # Load map dataset
 geo = gpd.read_file('data/cityhealth-newyork-190506/CHDB_data_tract_NY v5_3_withgeo.geojson')
 shapes = json.loads(geo['geometry'].apply(lambda x: x).to_json())
+# Create text field in geo for hover information
+geo['hovertext'] = 'FIP Tract: ' + geo['fips_state_county_tract_code'].astype(str) + '<br>' + \
+    'Diabetes Rate: ' + geo['Diabetes'].astype(str) + '%'
 
 app.layout = html.Div([
     # Template section
@@ -122,32 +125,32 @@ app.layout = html.Div([
             html.Div(className="about_div", children=[
                 html.H2('Why was this app made?'),
                 dcc.Markdown('''
-               - Type II Diabetes (T2D) is one of the most prevalent health conditions 
-                   in industrialized nations. In America alone, #### in #### people suffer with T2D 
-                   and is projected to reach #### by ####. T2D increases the risk for cardiovascular 
-                   disease by 2-4 times, which is by far the leading cause of death in industrialized nations. 
-                   The overall goal of this app is empower users of all kinds to better understand the various 
-                   factors underlying risk for T2D in many diverse communities across America. 
-               -  This app is ultimately meant to be used by anyone who has an interest in exploring T2D risk factors 
-                   across a wide range of communities. Some specific use cases could include (but are by no means limited to):   
+               - Type II Diabetes (T2D) is one of the most prevalent health conditions
+                   in industrialized nations. In America alone, #### in #### people suffer with T2D
+                   and is projected to reach #### by ####. T2D increases the risk for cardiovascular
+                   disease by 2-4 times, which is by far the leading cause of death in industrialized nations.
+                   The overall goal of this app is empower users of all kinds to better understand the various
+                   factors underlying risk for T2D in many diverse communities across America.
+               -  This app is ultimately meant to be used by anyone who has an interest in exploring T2D risk factors
+                   across a wide range of communities. Some specific use cases could include (but are by no means limited to):
                    1. Public health officials
                    2. City planners
-                   3. Hospital systems 
+                   3. Hospital systems
                    4. Community health advocates and activists
-                   5. Residents who are interested in learning about their own communities. 
+                   5. Residents who are interested in learning about their own communities.
                ''')
             ]),
             html.Div(className="about_div", children=[
                 html.H2('What can this app do?'),
-                dcc.Markdown(''' 
+                dcc.Markdown('''
                 +	This app makes use of the large amount of publicly available data and analyzes it using state-of-art AI/machine learning algorithms.
                 +	Through this approach, it can:
                     1.	Visualize communities at high risk for T2D.
-                    2.	Identify the risk factors that are most likely driving T2D in each specific 
-                        community (i.e. provide a community-specific “risk profile”). 
-                    3.	Offer a list of recommendations and resources that our algorithm predicts are most 
+                    2.	Identify the risk factors that are most likely driving T2D in each specific
+                        community (i.e. provide a community-specific “risk profile”).
+                    3.	Offer a list of recommendations and resources that our algorithm predicts are most
                         likely to have an impact on the health of that community. Each set of recommendations is
-                        specifically tailored to each community based on their risk profile.  
+                        specifically tailored to each community based on their risk profile.
                 ''')
             ]),
             html.Div(className="about_div", children=[
@@ -157,22 +160,22 @@ app.layout = html.Div([
                 + [IPUMS](https://ipums.org)
                     - [Health Surveys](https://healthsurveys.ipums.org)
                     - [NHGIS](https://www.nhgis.org)
-                + Google Maps 
+                + Google Maps
                 ''')
             ]),
             html.Div(className="about_div", children=[
                 html.H2('Who are you?'),
                 dcc.Markdown('''
-                    + Matt is a magical unicorn that prances across the skies of the New York City skyline. 
+                    + Matt is a magical unicorn that prances across the skies of the New York City skyline.
                      Is that a rainbow-colored sunset? No, it’s Matt.
-                     He lives in Chinatown, New York City.  
+                     He lives in Chinatown, New York City.
                         - [LinkedIn](https://www.linkedin.com/in/engmatthew)
                         - [Twitter](https://twitter.com/m3ngineer)
                         - [GitHub](https://github.com/m3ngineer)
                     + Brian is a bioinformatician currently at the Mount Sinai.
                      His research revolves around neuroscience, genomics, human evolution, machine learning, and more!
                      For some reason he likes to run in his free time.
-                     Also, he lives in Harlem, New York City.   
+                     Also, he lives in Harlem, New York City.
                         - [LinkedIn](https://www.linkedin.com/in/brian-schilder)
                         - [Twitter](https://twitter.com/BMSchilder)
                         - [GitHub](https://github.com/bschilder)
@@ -216,7 +219,7 @@ def update_tract_detail_summary(tract_map):
 
     return 'Tract: {}'.format(tract_id),'Diabetes rate: {}%'.format(diabetes_rate)
 
-# Plot chosen tract shape in Community View
+# Show chosen tract shape in Community View
 @app.callback(
     dash.dependencies.Output('image', 'src'),
     [Input(component_id='tract_map', component_property='hoverData')])
@@ -248,9 +251,7 @@ def map_tracts(tract_id):
             z=geo['Diabetes'],
             colorscale=sequential.PuRd, zmin=0, zmax=12,
             marker_opacity=0.5, marker_line_width=0,
-            # hovertemplate='Price: %{locations:$.2f}<extra></extra>',
-            # hoverlabel={'locations': 'Locations'},
-            text = 'FIPS: ' + geo['fips_state_county_tract_code'],
+            text = geo['hovertext'],
             )
         )
 
@@ -325,14 +326,6 @@ def generate_spider_plot(tract_map, n_factors=6):
     ),
     paper_bgcolor = "rgba(0,0,0,0)"
 )
-
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run_server(port=8081, debug=True)
