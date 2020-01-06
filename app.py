@@ -165,32 +165,6 @@ def make_figure(Tract, n_factors, State, City):
 
 
 
-@app.callback(Output('tabs-content-example', 'children'),
-              [Input('TABS', 'value')])
-def render_content(tab):
-    if tab == 'Tab2':
-        return html.Div([
-            html.H3('Tab content 2'),
-            dcc.Graph(
-                id='graph-2-tabs',
-                figure={
-                    'data': [{
-                        'x': [1, 2, 3],
-                        'y': [3, 1, 2],
-                        'type': 'bar'
-                    }]
-                }
-            )
-        ])
-
-
-
-
-
-
-
-
-
 # Freeze flask!
 pages = FlatPages(server)
 freezer = Freezer(server)
