@@ -10,7 +10,7 @@ from urllib.request import urlopen
 import plotly.graph_objects as go
 import geopandas as gpd
 
-import Code.cityhealth.CityHealth as CH
+import Code.CityHealth.CityHealth as CH
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -169,7 +169,11 @@ def map_tracts(tract_id):
             locations = [str(i) for i in geo.index.values],
             z=geo['Diabetes'],
             colorscale=sequential.PuRd, zmin=0, zmax=12,
-            marker_opacity=0.5, marker_line_width=0)
+            marker_opacity=0.5, marker_line_width=0,
+            # hovertemplate='Price: %{locations:$.2f}<extra></extra>',
+            # hoverlabel={'locations': 'Locations'},
+            text = 'FIPS: ' + geo['fips_state_county_tract_code'],
+            )
         )
 
     fig.update_layout(
