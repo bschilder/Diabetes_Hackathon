@@ -18,6 +18,8 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
 
+static_image_route = '/images/tracts/'
+
 available_indicators = df['Indicator Name'].unique()
 
 # Variables
@@ -84,9 +86,7 @@ app.layout = html.Div([
             html.H2('Community View'),
             # html.Div(id='community_view_tract_shape'),
             html.Div([
-                dcc.Graph(id="community_view_tract_shape",
-                    # style={"width": "75%", "display": "inline-block"}
-                    )
+                html.Img(id='image', style={'height':'50%', 'width':'50%'})
             ]),
             html.Div([
                 html.H3(id='community_view_tract_id'),
@@ -140,43 +140,26 @@ def update_tract_detail_summary(tract_map):
 
 # Plot chosen tract shape in Community View
 @app.callback(
-        Output('community_view_tract_shape', 'figure'),
-        [Input(component_id='tract_map', component_property='hoverData')]
-    )
-def update_tract_detail_summary(tract_map):
-    ''' Plot tract shape in Community View summary '''
-
+    dash.dependencies.Output('image', 'src'),
+    [Input(component_id='tract_map', component_property='hoverData')])
+def update_image_src(tract_map):
     try:
         location = int(tract_map['points'][0]['location'])
-        geojson = gpd.GeoSeries(geo.iloc[location]['geometry']).__geo_interface__
-        lat = geo.iloc[location]['geometry'].centroid.x
-        long = geo.iloc[location]['geometry'].centroid.y
+        fip = geo.iloc[location]['fips_state_county_tract_code']
     except:
-        location = 0
-        geojson = gpd.GeoSeries(geo.iloc[location]['geometry']).__geo_interface__
-        lat = 40.7410224
-        long = -73.9939661
+        fip = '36005000100'
+    # return static_image_route + fip + '.png'
+    return 'https://github.com/bschilder/Diabetes_Hackathon/blob/master/images/tracts/{}.png?raw=True'.format(fip)
 
-    fig = go.Figure(go.Choroplethmapbox(geojson=geojson,
-            locations = ['0'],
-            z=[10],
-            colorscale=sequential.PuRd, zmin=0, zmax=12,
-            marker_opacity=0.5, marker_line_width=0, showscale=False)
-        )
-
-    fig.update_layout(
-            mapbox_style="carto-positron",
-            mapbox_zoom=12,
-            mapbox_center = {"lat": lat, "lon": long},
-            margin={"r":0,"t":0,"l":0,"b":0},
-            autosize=False,
-            width=150,
-            height=150,
-            showlegend=False,
-
-        )
-
-    return fig
+# Add a static image route that serves images from desktop
+# Be *very* careful here - you don't want to serve arbitrary files
+# from your computer or server
+@app.server.route('{}<image_path>.png'.format(static_image_route))
+def serve_image(image_path):
+    image_name = '{}.png'.format(image_path)
+    # if image_name not in list_of_images:
+    #     raise Exception('"{}" is excluded from the allowed static files'.format(image_path))
+    return flask.send_from_directory(image_directory, image_name)
 
 # Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
@@ -262,4 +245,4 @@ def generate_spider_plot(tract_map, n_factors=6):
 )
 
 if __name__ == '__main__':
-    app.run_server(port=8080, debug=True)
+    app.run_server(port=8081, debug=True)
