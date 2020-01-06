@@ -68,46 +68,43 @@ app = dash.Dash(
 )
 
 
-app.layout = html.Div(
-    [
+app.layout = html.Div([
         html.H1("Diabetes Risk Profile"),
-        html.Div([
-                 html.H5(["Select the community (a.k.a. Tract) of interest below."]),
-                 html.H5(["On the right, a radar plot will display the Risk Profile of that Tract."])
-                  ],
-                 style={"width": "60%"}, id="Instructions"
-        ),
-        html.Div(
-            [html.Br(),
-             html.Label(["Tract :"]),
-             html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=data.index[0])]),
-             html.Br(),
-             html.Label(["Number of Risk Factors :"]),
-             html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)]),
-             html.Br(),
-             html.Label(["State :"]),
-             html.P([dcc.Dropdown(id="State", options=state_dict, value="All States")]),
-             html.Br(),
-             html.Label(["City :"]),
-             html.P([dcc.Dropdown(id="City", options=city_dict, value="All Cities")])],
-            style={"width": "25%", "float": "left"}, id="Dropdowns"
-        ),
-        dcc.Loading([
-            dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"})
-        ]),
-        html.Div([html.Div([html.Span([html.H5("Who is this application made for?")]),
-                      html.P(["This application is made for..."])
-                    ]),
-                  html.Div([html.H5(["What can this tool do?"]),
-                      html.P(["This application is made for..."])
-                    ]),
-                  html.Div([html.H5(["When does this data cover?"]),
-                      html.P(["This application is made for..."])
+            dcc.Tabs(id="TABS", value='tab1', children=[
+                ## TAB 1
+                dcc.Tab(label='Tab1', value="tab1", children=[
+                    html.Div([
+                        html.H5(["Select the community (a.k.a. Tract) of interest below."]),
+                        html.H5(["On the right, a radar plot will display the Risk Profile of that Tract."])
+                    ],
+                        style={"width": "60%"}, id="Instructions"
+                    ),
+                    html.Div([
+                        html.Br(),
+                        html.Label(["Tract :"]),
+                        html.P([dcc.Dropdown(id="Tract", options=tract_dict, value=data.index[0])]),
+                         html.Br(),
+                         html.Label(["Number of Risk Factors :"]),
+                         html.P([dcc.Dropdown(id="N_Factors", options=n_factors_dict, value=6)]),
+                         html.Br(),
+                         html.Label(["State :"]),
+                         html.P([dcc.Dropdown(id="State", options=state_dict, value="All States")]),
+                         html.Br(),
+                         html.Label(["City :"]),
+                         html.P([dcc.Dropdown(id="City", options=city_dict, value="All Cities")])
+                    ],
+                        style={"width": "25%", "float": "left"}, id="Dropdowns"
+                    ),
+                    dcc.Loading([
+                        dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"})
                     ])
-                  ], id="About"
-                 )
-    ], style={"padding":"20px"}
-)
+                ]), # End Tab1
+
+                ## TAB 2
+                dcc.Tab(label='Tab2',  value='tab-2-example', style={"padding": "20px"}) # End Tab2
+
+        ]) # End TABS
+])
 
 
 @app.callback(Output("graph", "figure"), [Input(d, "value") for d in dropdowns])
@@ -165,6 +162,34 @@ def make_figure(Tract, n_factors, State, City):
     ),
     paper_bgcolor = "rgba(0,0,0,0)"
 )
+
+
+
+@app.callback(Output('tabs-content-example', 'children'),
+              [Input('TABS', 'value')])
+def render_content(tab):
+    if tab == 'Tab2':
+        return html.Div([
+            html.H3('Tab content 2'),
+            dcc.Graph(
+                id='graph-2-tabs',
+                figure={
+                    'data': [{
+                        'x': [1, 2, 3],
+                        'y': [3, 1, 2],
+                        'type': 'bar'
+                    }]
+                }
+            )
+        ])
+
+
+
+
+
+
+
+
 
 # Freeze flask!
 pages = FlatPages(server)

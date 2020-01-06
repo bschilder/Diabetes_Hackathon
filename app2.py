@@ -10,7 +10,7 @@ from urllib.request import urlopen
 import plotly.graph_objects as go
 import geopandas as gpd
 
-import Code.CityHealth.CityHealth as CH
+import Code.cityhealth.CityHealth as CH
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
