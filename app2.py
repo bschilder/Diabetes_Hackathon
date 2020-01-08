@@ -39,8 +39,8 @@ geo = gpd.read_file('data/cityhealth-newyork-190506/CHDB_data_tract_NY v5_3_with
 shapes = json.loads(geo['geometry'].apply(lambda x: x).to_json())
 # Create text field in geo for hover information
 geo['hovertext'] = 'Diabetes Rate: ' + geo['Diabetes'].astype(str) + '%' + '<br>' + \
-    geo['Name'].astype(str) + '<br>' + \
-    'FIP Tract: ' + geo['fips_state'].astype(str)
+    geo['neighborhood_name'].astype(str) + '<br>' + \
+    'FIP Tract: ' + geo['fips_state_county_tract_code'].astype(str)
 
 app.layout = html.Div([
     # Template section
