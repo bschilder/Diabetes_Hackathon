@@ -109,7 +109,7 @@ app.layout = html.Div([
                     clickData={'points': [{'location': '1'}]}
                 )
                 ],
-                style={'width': '69%', 'display': 'inline-block', 'float': 'right'}
+                style={'width': '69%', 'height': '100%', 'display': 'inline-block', 'float': 'right'}
                 ),
 
         ## Polar plot
@@ -250,7 +250,7 @@ def map_tracts(tract_id):
     fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
             locations = [str(i) for i in geo.index.values],
             z=geo['Diabetes'],
-            colorscale=sequential.PuRd, zmin=0, zmax=12,
+            colorscale=sequential.Blues, zmin=0, zmax=12,
             marker_opacity=0.5, marker_line_width=0,
             text = geo['hovertext'],
             )
