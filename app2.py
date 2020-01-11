@@ -43,43 +43,8 @@ geo['hovertext'] = 'Diabetes Rate: ' + geo['Diabetes'].astype(str) + '%' + '<br>
     'FIP Tract: ' + geo['fips_state_county_tract_code'].astype(str)
 
 app.layout = html.Div([
-    # Template section
-    # html.Div([
-        # html.Div([
-        #     dcc.Dropdown(
-        #         id='crossfilter-xaxis-column',
-        #         options=[{'label': i, 'value': i} for i in available_indicators],
-        #         value='Fertility rate, total (births per woman)'
-        #     ),
-        #     dcc.RadioItems(
-        #         id='crossfilter-xaxis-type',
-        #         options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-        #         value='Linear',
-        #         labelStyle={'display': 'inline-block'}
-        #     )
-        # ],
-        # style={'width': '49%', 'display': 'inline-block'}),
 
-        # html.Div([
-        #     dcc.Dropdown(
-        #         id='crossfilter-yaxis-column',
-        #         options=[{'label': i, 'value': i} for i in available_indicators],
-        #         value='Life expectancy at birth, total (years)'
-        #     ),
-        #     dcc.RadioItems(
-        #         id='crossfilter-yaxis-type',
-        #         options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-        #         value='Linear',
-        #         labelStyle={'display': 'inline-block'}
-        #     )
-        # ], style={'width': '49%', 'float': 'right', 'display': 'inline-block'})
-    # ], style={
-    #     'borderBottom': 'thin lightgrey solid',
-    #     'backgroundColor': 'rgb(250, 250, 250)',
-    #     'padding': '10px 5px'
-    # }),
-
-    html.H1('Diabetes Hackathon'),
+    html.H1('Making health local'),
     dcc.Tabs([
         dcc.Tab(label='App', id="App", children=[
         ## Tract dropdown
@@ -89,11 +54,11 @@ app.layout = html.Div([
 
         ## Tract details
         html.Div([
-                html.H2('Community View'),
-                # html.Div(id='community_view_tract_shape'),
+            html.Div([
+                html.H2('Community View', style={'text-align': 'center'}),
                 html.Div([
-                    html.Img(id='image', style={'height':'50%', 'width':'50%'})
-                ]),
+                    html.Img(id='image', style={'height':'50%', 'width':'50%', 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto'})
+                    ]),
                 html.Div([
                     html.H3(id='community_view_tract_id'),
                     html.H3(id='community_view_diabetes_rate'),
@@ -103,14 +68,16 @@ app.layout = html.Div([
                 ),
 
         ## Map
-        html.Div([
+            html.Div([
                 dcc.Graph(
                     id='tract_map',
-                    clickData={'points': [{'location': '1'}]}
+                    clickData={'points': [{'location': '1'}]},
+                    style={'height': '100%'}
                 )
                 ],
-                style={'width': '69%', 'height': '100%', 'display': 'inline-block', 'float': 'right'}
+                style={'width': '69%', 'display': 'inline-block', 'float': 'right'}
                 ),
+        ], style={'height': '100vh'}),
 
         ## Polar plot
         html.Div([
