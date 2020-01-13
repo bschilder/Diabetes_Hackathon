@@ -260,11 +260,11 @@ def generate_spider_plot(tract_map, n_factors=6):
         height=700,
     ).update_traces(
         fill='toself',
-        fillcolor="rgba(0, 255, 238, .9)",#"rgba(0,0,255, .9)",
+        fillcolor="#4169e1",#"rgba(0,0,255, .9)",
         mode = "lines+markers",
-        line_color = "magenta",
+        line_color = "#ff69b4",
         marker=dict(
-            color="magenta",
+            color="#ff69b4",
             symbol="circle",
             size=12 )
     ).update_layout(
@@ -287,7 +287,7 @@ def generate_spider_plot(tract_map, n_factors=6):
             linewidth = 2,
             gridcolor = "white",
             gridwidth = 2,
-            color = "magenta",
+            color = "#ff69b4",
             visible =True,
             range=[min_max["min"], min_max["max"]]
           )
