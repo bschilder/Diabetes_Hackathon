@@ -255,8 +255,6 @@ def generate_spider_plot(tract_map, n_factors=6):
         polar_data,
         r="Risk Score",
         theta="metric_name",
-        # color="Risk Score",
-        # template="plotly_dark",
         height=700,
     ).update_traces(
         fill='toself',
