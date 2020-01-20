@@ -1,46 +1,64 @@
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 from dash.dependencies import Input, Output
 import plotly_express as px
-import json
-from plotly.express.colors import sequential
-from urllib.request import urlopen
-import plotly.graph_objects as go
-import geopandas as gpd
 
-import Code.cityhealth.CityHealth as CH
+from urllib.request import urlopen
+from plotly.express.colors import sequential
+import plotly.graph_objects as go
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
-
+# df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
+# available_indicators = df['Indicator Name'].unique()
 static_image_route = '/images/tracts/'
 
-available_indicators = df['Indicator Name'].unique()
+def recompute():
+    import pickle
+    import json
+    import geopandas as gpd
+    import Code.cityhealth.CityHealth as CH
 
-# Variables
-method="ridge_regression"
+    data = CH.preprocess_data()
+    method = "ridge_regression"
+    model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
+    nyc_data = CH.preprocess_data(NYC_only=True, impute=False, drop_na=False)
 
-data = CH.preprocess_data()
-model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
-weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
-city_average = round(data["Diabetes"].mean(),1)
+    weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
+    city_average = round(data["Diabetes"].mean(),1)
+    tract_dict = [dict(label=x, value=x) for x in data.index]
+    # Find mix/max for radar plot
+    min_max = CH.min_max_scores(data, weights)
+    # Load map dataset
+    geo = gpd.read_file('data/cityhealth-newyork-190506/CHDB_data_tract_NY v5_3_withgeo_v2.geojson')
+    shapes = json.loads(geo['geometry'].apply(lambda x: x).to_json())
+    # Create text field in geo for hover information
+    geo['hovertext'] = 'Diabetes Rate: ' + geo['Diabetes'].astype(str) + '%' + '<br>' + \
+        geo['neighborhood_name'].astype(str) + '<br>' + \
+        'FIP Tract: ' + geo['fips_state_county_tract_code'].astype(str)
+    # Save all objects as a dict in a pickle
+    pickle.dump({'data':nyc_data,
+                 'model':model,
+                 'method':method,
+                 'coefs':coefs,
+                 'weights':weights,
+                 'city_average':city_average,
+                 'tract_dict':tract_dict,
+                 'min_max':min_max,
+                 'geo':geo,
+                 'shapes':shapes}, open("./Data/saved_objects.pickle", 'wb'))
 
-tract_dict = [dict(label=x, value=x) for x in data.index]
-# Find mix/max for radar plot
-min_max = CH.min_max_scores(data, weights)
+def import_precomputed(pickle_path="./Data/saved_objects.pickle"):
+    import pickle
+    p = pickle.load(open(pickle_path, "rb"))
+    return [p[x] for x in p]
 
-# Load map dataset
-geo = gpd.read_file('data/cityhealth-newyork-190506/CHDB_data_tract_NY v5_3_withgeo_v2.geojson')
-shapes = json.loads(geo['geometry'].apply(lambda x: x).to_json())
-# Create text field in geo for hover information
-geo['hovertext'] = 'Diabetes Rate: ' + geo['Diabetes'].astype(str) + '%' + '<br>' + \
-    geo['neighborhood_name'].astype(str) + '<br>' + \
-    'FIP Tract: ' + geo['fips_state_county_tract_code'].astype(str)
+data, model, method, coefs, weights, city_average, tract_dict, min_max, geo, shapes = import_precomputed(pickle_path="./Data/saved_objects.pickle")
+
 
 app.layout = html.Div([
 
@@ -115,7 +133,7 @@ app.layout = html.Div([
                 +	Through this approach, it can:
                     1.	Visualize communities at high risk for T2D.
                     2.	Identify the risk factors that are most likely driving T2D in each specific
-                        community (i.e. provide a community-specific “risk profile”).
+                        community (i.e. provide a community-specific \\"risk profile\\"").
                     3.	Offer a list of recommendations and resources that our algorithm predicts are most
                         likely to have an impact on the health of that community. Each set of recommendations is
                         specifically tailored to each community based on their risk profile.
@@ -134,19 +152,7 @@ app.layout = html.Div([
             html.Div(className="about_div", children=[
                 html.H2('Who are you?'),
                 dcc.Markdown('''
-                    + Matt is a magical unicorn that prances across the skies of the New York City skyline.
-                     Is that a rainbow-colored sunset? No, it’s Matt.
-                     He lives in Chinatown, New York City.
-                        - [LinkedIn](https://www.linkedin.com/in/engmatthew)
-                        - [Twitter](https://twitter.com/m3ngineer)
-                        - [GitHub](https://github.com/m3ngineer)
-                    + Brian is a bioinformatician currently at the Mount Sinai.
-                     His research revolves around neuroscience, genomics, human evolution, machine learning, and more!
-                     For some reason he likes to run in his free time.
-                     Also, he lives in Harlem, New York City.
-                        - [LinkedIn](https://www.linkedin.com/in/brian-schilder)
-                        - [Twitter](https://twitter.com/BMSchilder)
-                        - [GitHub](https://github.com/bschilder)
+               
                 ''')
             ]),
             html.Div(className="about_div", children=[

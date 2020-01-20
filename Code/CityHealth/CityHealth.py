@@ -138,7 +138,7 @@ def tract_api_multistate(states="all", save_path="./Code/CityHealth/Data/CityHea
     return df
 
 
-def pivot_handleNA(data_raw, impute=False):
+def pivot_handleNA(data_raw, impute=False, drop_na=True):
     from sklearn.preprocessing import StandardScaler
     # [1] Pivot
     data_pivot = data_raw.loc[:, ["state_abbr","city_name","stcotr_fips", "metric_name", "est"]].reset_index()\
@@ -154,7 +154,7 @@ def pivot_handleNA(data_raw, impute=False):
         from sklearn.impute import SimpleImputer
         imputer = SimpleImputer(strategy="mean")
         data_pivot[all_fields] = imputer.fit_transform( data_pivot[all_fields] )
-    else:
+    elif drop_na:
         print("+ Dropping missing values...")
         data_pivot = data_pivot.dropna()
         print(before-data_pivot.shape[0],"/",data_pivot.shape[0],"tracts dropped after filtering NAs.")
@@ -555,7 +555,8 @@ def run_umap(data_raw, hue_var="Diabetes"):
 def preprocess_data(data_path="data/cityhealth/CHDB_data_tract_all_v7_1.csv.gz",
                     raw=False,
                     NYC_only=False,
-                    impute=False):
+                    impute=False,
+                    drop_na=True):
     ##### stcotr_fips = (Concatenation of state, county and tract FIPS codes)
     data_raw = pd.read_csv(data_path)
     if NYC_only:
@@ -565,7 +566,7 @@ def preprocess_data(data_path="data/cityhealth/CHDB_data_tract_all_v7_1.csv.gz",
         return raw
     else:
         print("Preprocessing CityHealth data (pivot ==> dropna => normalize).")
-        data = pivot_handleNA(data_raw, impute=impute)
+        data = pivot_handleNA(data_raw, impute=impute, drop_na=drop_na)
         # data.describe()
         data = normalize(data, y_var="Diabetes")
         # X_train, X_test, y_train, y_test = data_split(data)
