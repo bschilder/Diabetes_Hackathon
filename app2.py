@@ -10,6 +10,8 @@ from urllib.request import urlopen
 from plotly.express.colors import sequential
 import plotly.graph_objects as go
 
+import Code.cityhealth.CityHealth as CH
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -21,7 +23,6 @@ def recompute():
     import pickle
     import json
     import geopandas as gpd
-    import Code.cityhealth.CityHealth as CH
 
     data = CH.preprocess_data()
     method = "ridge_regression"
@@ -152,7 +153,7 @@ app.layout = html.Div([
             html.Div(className="about_div", children=[
                 html.H2('Who are you?'),
                 dcc.Markdown('''
-               
+
                 ''')
             ]),
             html.Div(className="about_div", children=[
