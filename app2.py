@@ -100,13 +100,20 @@ app.layout = html.Div([
 
         ## Polar plot
         html.Div([
-            dcc.Loading([
-                dcc.Graph(id="graph", style={"width": "75%", "display": "inline-block"})
+            html.Div([
+
+                    ], style={'width': '29%', 'display': 'inline-block'}
+                ),
+            html.Div([
+                dcc.Loading([
+                            dcc.Graph(id="graph", style={"width": "90%", "display": "inline-block"})
+                            ]),
+                    ],
+                style={'width': '69%', 'display': 'inline-block', 'float': 'right'}
+                # style={'float': 'right'}
+                ),
             ]),
-        ],
-            # style={'width': '49%', 'display': 'inline-block', 'padding': '0 20', 'float': 'right'}
-        ),
-            ]), # END TAB1
+        ]), # END TAB1
     dcc.Tab(label='About', id='About', children=[
         html.Div(style={'margin':'100px'}, children=[
             html.Div(className="about_div", children=[
@@ -205,7 +212,7 @@ def update_image_src(tract_map):
     except:
         fip = '36005000100'
     # return static_image_route + fip + '.png'
-    return 'https://github.com/bschilder/Diabetes_Hackathon/blob/master/images/tracts/{}.png?raw=True'.format(fip)
+    return 'https://bschilder.github.io/Diabetes_Hackathon/blob/master/images/tracts/{}.png?raw=True'.format(fip)
 
 # Add a static image route that serves images from desktop
 # Be *very* careful here - you don't want to serve arbitrary files
@@ -263,15 +270,16 @@ def generate_spider_plot(tract_map, n_factors=6):
         r="Risk Score",
         theta="metric_name",
         height=700,
+        line_close=True
     ).update_traces(
         fill='toself',
-        fillcolor="#4169e1",#"rgba(0,0,255, .9)",
-        mode = "lines+markers",
-        line_color = "#ff69b4",
-        marker=dict(
-            color="#ff69b4",
-            symbol="circle",
-            size=12 )
+        fillcolor='rgba(65, 105, 225, 0.60)',
+        mode = "lines",
+        line_color = "#F0F0F0",
+        # marker=dict(
+            # color="#4169e1",
+            # symbol="circle",
+            # size=12 )
     ).update_layout(
     title = dict(
         text = title,
@@ -280,11 +288,11 @@ def generate_spider_plot(tract_map, n_factors=6):
     font_size = 15,
     showlegend = False,
     polar = dict(
-      bgcolor = "rgba(0,0,0, .85)",#"""rgb(223, 223, 223)",
+      bgcolor = "rgba(240,240,240, .85)",
       angularaxis = dict(
         linewidth = 3,
         showline=True,
-        linecolor='rgba(0,0,0, .85)',
+        linecolor='rgba(255,255,255, .85)',
         color="black"
       ), radialaxis = dict(
             side = "clockwise",
@@ -292,7 +300,7 @@ def generate_spider_plot(tract_map, n_factors=6):
             linewidth = 2,
             gridcolor = "white",
             gridwidth = 2,
-            color = "#ff69b4",
+            color = "#4169e1",
             visible =True,
             range=[min_max["min"], min_max["max"]]
           )
