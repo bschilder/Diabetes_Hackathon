@@ -101,7 +101,7 @@ app.layout = html.Div([
         ## Polar plot
         html.Div([
             html.Div([
-
+                    html.H3(id='graph-title'),
                     ], style={'width': '29%', 'display': 'inline-block'}
                 ),
             html.Div([
@@ -249,7 +249,8 @@ def map_tracts(tract_id):
 # Function to make polar radial chart
 dropdowns = ["tract_id"]
 @app.callback(
-        Output("graph", "figure"),
+        [Output("graph", "figure"),
+        Output('graph-title', 'children')],
         [Input('tract_map', "clickData")]
     )
 def generate_spider_plot(tract_map, n_factors=6):
@@ -282,11 +283,14 @@ def generate_spider_plot(tract_map, n_factors=6):
             # size=12 )
     ).update_layout(
     title = dict(
-        text = title,
-        x = 1,
+        text = '',
+        x = 0,
         y = .925),
     font_size = 15,
     showlegend = False,
+    # margin=dict(l=50,r=50),
+    # xaxis=dict(automargin=True),
+    # yaxis=dict(automargin=True),
     polar = dict(
       bgcolor = "rgba(240,240,240, .85)",
       angularaxis = dict(
@@ -305,8 +309,17 @@ def generate_spider_plot(tract_map, n_factors=6):
             range=[min_max["min"], min_max["max"]]
           )
     ),
-    paper_bgcolor = "rgba(0,0,0,0)"
-)
+    paper_bgcolor = "rgba(0,0,0,0)",
+    annotations = [
+        go.layout.Annotation(
+            x=0.5,
+            y=-0.15,
+            showarrow=False,
+            text="Custom x-axis title",
+            xref="paper",
+            yref="paper"
+        )],
+), title
 
 if __name__ == '__main__':
     app.run_server(port=8081, debug=True)
