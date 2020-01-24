@@ -101,8 +101,16 @@ app.layout = html.Div([
         ## Polar plot
         html.Div([
             html.Div([
-                    html.H3(id='graph-title'),
-                    ], style={'width': '29%', 'display': 'inline-block'}
+                html.Div([
+                    html.Div([
+                                html.H3(id='radial_predicted'),
+                                html.H3(id='radial_actual'),
+                                html.H3(id='radial_city_average'),
+                             ], style={'flex': '1'}
+                            ),
+                         ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'border': 'height': '100%'},
+                        )
+                    ], style={'width': '29%', 'display': 'inline-block', 'height': '700px'}
                 ),
             html.Div([
                 dcc.Loading([
@@ -250,7 +258,9 @@ def map_tracts(tract_id):
 dropdowns = ["tract_id"]
 @app.callback(
         [Output("graph", "figure"),
-        Output('graph-title', 'children')],
+        Output('radial_predicted', 'children'),
+        Output('radial_actual', 'children'),
+        Output('radial_city_average', 'children')],
         [Input('tract_map', "clickData")]
     )
 def generate_spider_plot(tract_map, n_factors=6):
@@ -261,10 +271,9 @@ def generate_spider_plot(tract_map, n_factors=6):
 
     polar_data = CH.prepare_polar(data, weights, stcotr_fips=tract_id, n_factors=n_factors)
     predicted, actual = CH.predict_value(model, data, stcotr_fips=tract_id, y_var="Diabetes")
-    title = "% of Community with Diabetes:<br>"+\
-            "  Predicted = " + str(round(predicted,1)) + " %<br>"+ \
-            "  Actual = " + str(actual) + " %<br>"+\
-            "  City Average = "+str(city_average)+" %"
+    radial_predicted = "Predicted = " + str(round(predicted,1)) + " %"
+    radial_actual = "Actual = " + str(actual) + " %"
+    radial_city_average = "City Average = "+str(city_average)+" %"
 
     return px.line_polar(
         polar_data,
@@ -319,7 +328,7 @@ def generate_spider_plot(tract_map, n_factors=6):
             xref="paper",
             yref="paper"
         )],
-), title
+), radial_predicted, radial_actual, radial_city_average
 
 if __name__ == '__main__':
     app.run_server(port=8081, debug=True)
