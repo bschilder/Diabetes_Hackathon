@@ -1,0 +1,8 @@
+.DS_Store
+/**/.DS_Store
+#/Code/CityHealth/Data/
+*conf.py
+*__pycache__/
+*.ipynb_checkpoints/
+*.pyc
+.env

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Posts</h2>
+
+<ul class="page-list">
+  {% dasher %}
+         {{ dasher}}
+      <li><a href="{{ url_for('dasher', path='dasher') }}">
+          {{ dasher.meta.title }}
+      </a>- {{ dasher.meta.date }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
