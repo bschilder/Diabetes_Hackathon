@@ -51,14 +51,14 @@ def recompute():
                  'tract_dict':tract_dict,
                  'min_max':min_max,
                  'geo':geo,
-                 'shapes':shapes}, open("./Data/saved_objects.pickle", 'wb'))
+                 'shapes':shapes}, open("./data/saved_objects.pickle", 'wb'))
 
-def import_precomputed(pickle_path="./Data/saved_objects.pickle"):
+def import_precomputed(pickle_path="./data/saved_objects.pickle"):
     import pickle
     p = pickle.load(open(pickle_path, "rb"))
     return [p[x] for x in p]
 
-data, model, method, coefs, weights, city_average, tract_dict, min_max, geo, shapes = import_precomputed(pickle_path="./Data/saved_objects.pickle")
+data, model, method, coefs, weights, city_average, tract_dict, min_max, geo, shapes = import_precomputed(pickle_path="./data/saved_objects.pickle")
 
 
 app.layout = html.Div([
@@ -108,7 +108,7 @@ app.layout = html.Div([
                                 html.H3(id='radial_city_average'),
                              ], style={'flex': '1'}
                             ),
-                         ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'border': 'height': '100%'},
+                         ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'height': '100%'},
                         )
                     ], style={'width': '29%', 'display': 'inline-block', 'height': '700px'}
                 ),
@@ -331,4 +331,4 @@ def generate_spider_plot(tract_map, n_factors=6):
 ), radial_predicted, radial_actual, radial_city_average
 
 if __name__ == '__main__':
-    app.run_server(port=8081, debug=True)
+    app.run_server(port=8080, debug=True)
