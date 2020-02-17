@@ -220,7 +220,7 @@ def update_image_src(tract_map):
     except:
         fip = '36005000100'
     # return static_image_route + fip + '.png'
-    return 'https://bschilder.github.io/Diabetes_Hackathon/blob/master/images/tracts/{}.png?raw=True'.format(fip)
+    return 'https://github.com/m3ngineer/Diabetes_Hackathon_Data/blob/master/images/tracts/{}.png?raw=True'.format(fip)
 
 # Add a static image route that serves images from desktop
 # Be *very* careful here - you don't want to serve arbitrary files
@@ -240,7 +240,7 @@ def map_tracts(tract_id):
             locations = [str(i) for i in geo.index.values],
             z=geo['Diabetes'],
             # colorscale=sequential.Blues,
-            colorscale=[(0, "rgb(247,251,255)"), 
+            colorscale=[(0, "rgb(247,251,255)"),
                         (0.1, "rgb(222,237,247)"),
                         (0.15, "rgb(158,202,225)"),
                         (.75, "rgb(8,48,107)"),
