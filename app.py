@@ -239,7 +239,7 @@ def map_tracts(tract_id):
     fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
             locations = [str(i) for i in geo.index.values],
             z=geo['Diabetes'],
-            colorscale=sequential.Blues, zmin=0, zmax=12,
+            colorscale=sequential.Blues,
             marker_opacity=0.5, marker_line_width=0,
             text = geo['hovertext'],
             )
