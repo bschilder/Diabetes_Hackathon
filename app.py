@@ -109,9 +109,7 @@ app.layout = html.Div([
                                 html.H5('N factors:'),
                                 html.P([dcc.Dropdown(id="n_factors", options=n_factors_dict, value=6)]),
                              ], style={'flex': '1'} ),
-                    html.Div([
-
-                    ]),
+                    html.Div([]),
                          ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'height': '100%'},
                         )
                     ], style={'width': '29%', 'display': 'inline-block', 'height': '700px'}
@@ -269,9 +267,9 @@ dropdowns = ["tract_id"]
         [Output("graph", "figure"),
         Output('radial_predicted', 'children'),
         Output('radial_actual', 'children'),
-        Output('radial_city_average', 'children'),
-        Output('n_factors', 'value')],
-        [Input('tract_map', "clickData")]
+        Output('radial_city_average', 'children')],
+        [Input('tract_map', "clickData"),
+         Input('n_factors','value')]
     )
 def generate_spider_plot(tract_map, n_factors=6):
     ''' '''
