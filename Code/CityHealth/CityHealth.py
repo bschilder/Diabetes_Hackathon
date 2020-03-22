@@ -57,7 +57,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
-import Code.cityhealth.ML_models as ML
 
 
 #--------------------------------------------------------------#
@@ -174,6 +173,161 @@ def normalize(data, y_var="Diabetes"):
     return data_norm
 
 
+#--------------------------------------------------------------#
+################## Feature selection models ###################
+#--------------------------------------------------------------#
+
+
+
+def data_split(data, y_var="Diabetes", test_size=0.3):
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import LabelEncoder
+    lab_enc = LabelEncoder()
+    id_vars=[y_var,"state_abbr","city_name","stcotr_fips"]
+    # Tranform into array for computational speedup
+    X = np.array(data.loc[:,~data.columns.isin(id_vars)])
+    y = np.array(data.loc[:,y_var])
+    # Fix continuous issue
+    # X = np.array([lab_enc.fit_transform(x) for x in X])
+    # y = lab_enc.fit_transform(Y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=3)
+    print(len(X_train), len(X_test))
+    return X_train, X_test, y_train, y_test
+
+
+
+def test_predictions(model, X_test, y_test):
+    predictions = model.predict(X_test)
+    # Calculate the absolute errors
+    errors = abs(predictions - y_test)
+    # Print out the mean absolute error (mae)
+    print('Mean Absolute Error:', round(np.mean(errors), 4), '%.')
+
+    # Calculate mean absolute percentage error (MAPE)
+    mape = 100 * (errors / y_test)
+    # Calculate and display accuracy
+    accuracy = 100 - np.mean(mape)
+    print('Accuracy:', round(accuracy, 4), '%.')
+    return errors
+
+def predict_value(model, data, stcotr_fips, y_var="Diabetes"):
+    data_sub = data.loc[stcotr_fips].copy()
+    id_vars = [y_var, "state_abbr", "city_name", "stcotr_fips"]
+    X = np.array(data_sub[~data_sub.index.isin(id_vars)]).reshape(1, -1)
+    y = np.array(data_sub[y_var])
+    actual = float(y)
+    predicted = model.predict(X)
+    return float(predicted), actual
+
+# Lasso regression
+def lasso(X_train, X_test, y_train, y_test, alpha=1):
+    from sklearn.linear_model import Lasso
+    # Lasso regression
+    # for a in range(0,10):
+    # print("Lasso: alpha = ",a)
+    clf = Lasso(alpha=alpha)
+    model = clf.fit(X = X_train, y = y_train)
+    # model.intercept_
+    errors = test_predictions(model, X_test, y_test)
+    return model, model.coef_
+
+# Mutual Information Criterion
+def mutual_info(X_train, X_test, y_train, y_test):
+    def mutual_info_subset(X, y, mode='percentile', param=50):
+        from sklearn.feature_selection import GenericUnivariateSelect
+        trans = GenericUnivariateSelect(score_func=mutual_info_regression,
+                                        mode=mode, param=param)
+        X_trans = trans.fit_transform(X, y)
+        return X_trans
+
+    from sklearn.feature_selection import mutual_info_regression
+    coefs = mutual_info_regression(X_train, y_train, n_neighbors=3)
+    return coef
+
+
+def plot_decision_tree(tree_small,
+                       feature_names=None,
+                       file_prefix="rf_tree"):
+    print("Creating decision tree plot ==> "+file_prefix+'.png')
+    if type(feature_names) != "list":
+        print("Creating default feature names.")
+        feature_names = ["Feature." + str(x + 1) for x in range(len(tree_small.feature_importances_))]
+    # Save the tree as a png image
+    export_graphviz(tree_small, out_file=file_prefix+'.dot', feature_names=feature_names, rounded=True, precision=1)
+    (graph,) = pydot.graph_from_dot_file(file_prefix+'.dot')
+    graph.write_png(file_prefix+'.png');
+
+def decision_tree(X_train, X_test, y_train, y_test,
+                  max_depth=6,
+                  feature_names=None,
+                  dt_plot=True):
+    from sklearn.tree import DecisionTreeRegressor, export_graphviz
+    clf =  DecisionTreeRegressor(max_depth=max_depth)
+    model = clf.fit(X_train, y_train)
+    Gini_importance = model.feature_importances_
+    errors = test_predictions(model, X_test, y_test)
+    if dt_plot:
+        plot_decision_tree(model, feature_names, file_prefix="dt_tree")
+    # regressor.decision_path(X)
+    return model, Gini_importance
+
+def random_forest(X_train, X_test, y_train, y_test,
+                  n_estimators=1000,
+                  max_depth=6,
+                  feature_names=None,
+                  dt_plot=True):
+    from sklearn.ensemble import RandomForestRegressor
+    # Instantiate model with 1000 decision trees
+    rf = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+    model = rf.fit(X_train, y_train)
+    errors = test_predictions(model, X_test, y_test)
+    Gini_importance = model.feature_importances_
+    if dt_plot:
+        # Extract the small tree
+        tree_small = model.estimators_[5]
+        plot_decision_tree(tree_small, feature_names, file_prefix="rf_tree")
+    return model, Gini_importance
+
+def ridge_regression(X_train, X_test, y_train, y_test):
+    # ridge regression == L2-Regularization
+    # A helper method for pretty-printing the coefficients
+    def pretty_print_coefs(coefs, names=None, sort=False):
+        if names == None:
+            names = ["X%s" % x for x in range(len(coefs))]
+        lst = zip(coefs, names)
+        if sort:
+            lst = sorted(lst, key=lambda x: -np.abs(x[0]))
+        return " + ".join("%s * %s" % (round(coef, 3), name)
+                          for coef, name in lst)
+
+    from sklearn.linear_model import Ridge
+    ridge = Ridge(alpha=1.0)
+    model = ridge.fit(X_train, y_train)
+    print("Ridge model:", pretty_print_coefs(ridge.coef_))
+    errors = test_predictions(model, X_test, y_test)
+    return model, model.coef_
+
+# Multivariate Linear Regression
+def linear_regression(X_train, X_test, y_train, y_test):
+    from sklearn.linear_model import LinearRegression
+    # from sklearn.preprocessing import PolynomialFeatures
+    # Create interaction term (not polynomial features)
+    # interaction = PolynomialFeatures(degree=3, include_bias=False, interaction_only=True)
+    # X = interaction.fit_transform(X)
+
+    # Easy summary method
+    # import statsmodels.api as sm
+    # model  = sm.OLS(y, X).fit()
+    # model.summary()
+    LR = LinearRegression()
+    model = LR.fit(X_train, y_train)
+    errors = test_predictions(model, X_test, y_test)
+    # reg.score(X, y)
+    # model.intercept_
+    return model, model.coef_
+
+
+
 
 def feature_weights(data, coefs, weight_label="coef", y_var="Diabetes"):
     print("Creating feature weights dataframe.")
@@ -204,29 +358,29 @@ def min_max_scores(data, weights):
 
 def train_model(data, test_size=0.3, method="random_forest", plot_weights=True):
     print("Training Model:",method)
-    X_train, X_test, y_train, y_test = ML.data_split(data, y_var="Diabetes", test_size=test_size)
+    X_train, X_test, y_train, y_test = data_split(data, y_var="Diabetes", test_size=test_size)
     feature_names = data.columns[data.columns != "Diabetes"]
     if method=="lasso":
-        model, coefs = ML.lasso(X_train, X_test, y_train, y_test, alpha=1)
+        model, coefs = lasso(X_train, X_test, y_train, y_test, alpha=1)
     if method=="mutual_info":
-        coefs = ML.mutual_info(X_train, X_test, y_train, y_test)
+        coefs = mutual_info(X_train, X_test, y_train, y_test)
         model=None
     if method=="decision_tree":
-        model, coefs = ML.decision_tree(X_train, X_test, y_train, y_test,
+        model, coefs = decision_tree(X_train, X_test, y_train, y_test,
                                     max_depth=6,
                                     feature_names=feature_names,
                                     dt_plot=False)
     if method=="random_forest":
         # Accuracy plateua's around max_depth=10
-        model, coefs = ML.random_forest(X_train, X_test, y_train, y_test,
+        model, coefs = random_forest(X_train, X_test, y_train, y_test,
                               max_depth=8,
                               n_estimators=1000,
                               feature_names=feature_names,
                               dt_plot=False)
     if method=="ridge_regression":
-        model, coefs = ML.ridge_regression(X_train, X_test, y_train, y_test)
+        model, coefs = ridge_regression(X_train, X_test, y_train, y_test)
     if method=="linear_regression":
-        model, coefs = ML.linear_regression(X_train, X_test, y_train, y_test)
+        model, coefs = linear_regression(X_train, X_test, y_train, y_test)
     return model, coefs
 
 

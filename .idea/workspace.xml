@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a9521d71-26a1-4a51-b90c-6e524f7512ff" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Code/CityHealth/neural_network.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Code/ML_models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" beforeDir="false" afterPath="$PROJECT_DIR$/Code/CityHealth/CityHealth.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/saved_objects.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/data/saved_objects.pickle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code/ML_models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Code/CityHealth/ML_models.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -64,6 +60,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Code/cityhealth" />
       <recent name="$PROJECT_DIR$/Code/CityHealth" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/Code" />
@@ -140,7 +137,7 @@
       <workItem from="1578434848094" duration="80000" />
       <workItem from="1579480076258" duration="4959000" />
       <workItem from="1582665551161" duration="210000" />
-      <workItem from="1584899629614" duration="7693000" />
+      <workItem from="1584899629614" duration="8454000" />
     </task>
     <servers />
   </component>
