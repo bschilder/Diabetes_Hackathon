@@ -237,29 +237,33 @@ def serve_image(image_path):
 # Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
 def map_tracts(tract_id):
-    ''' '''
+    ''' Creates geographic heatmap of diabetes rates binned into quartiles '''
+
+    bin_labels = [0, .25, .5, .75, 1]
+    geo['Diabetes_bin'], bins_perc_diabetes = pd.qcut(geo['Diabetes'],
+                              q=5,
+                              retbins=True,
+                              labels=bin_labels)
+
     fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
             locations = [str(i) for i in geo.index.values],
-            z=geo['Diabetes'],
+            z=geo['Diabetes_bin'],
             # colorscale=sequential.Blues,
-            colorscale=[(0, "rgb(247,251,255)"),
-                        (0.1, "rgb(222,237,247)"),
-                        (0.15, "rgb(158,202,225)"),
-                        (.75, "rgb(8,48,107)"),
-                        (1, "rgb(215,48,31)")],
-            marker_opacity=0.5, marker_line_width=0,
+            colorscale=[(0, "rgb(222,235,247)"),
+                        (.25, "rgb(198,219,239)"),
+                        (.5, "rgb(107,174,214)"),
+                        (.75, "rgb(33,113,181)"),
+                        (1, "rgb(8,48,107)")],
+            zmin=0, zmax=1,
+            marker_opacity=0.75, marker_line_width=0,
             text = geo['hovertext'],
+            colorbar=dict(
+                title="Diabetes Rate",
+                tickvals=[0, 0.2, 0.4, 0.6, 0.8, 1],
+                ticktext=['{}%'.format(label) for label in list(bins_perc_diabetes.astype(str))],
+                )
             )
         )
-
-    fig.update_layout(
-            mapbox_style="carto-positron",
-            mapbox_zoom=10,
-            mapbox_center = {"lat": 40.7410224, "lon": -73.9939661},
-            margin={"r":0,"t":0,"l":0,"b":0}
-        )
-
-    return fig
 
 # Function to make polar radial chart
 dropdowns = ["tract_id"]
