@@ -59,7 +59,7 @@ def import_precomputed(pickle_path="./data/saved_objects.pickle"):
     return [p[x] for x in p]
 
 data, model, method, coefs, weights, city_average, tract_dict, min_max, geo, shapes = import_precomputed(pickle_path="./data/saved_objects.pickle")
-
+n_factors_dict =[{'label':x, 'value':x} for x in range(1,len(coefs))]
 
 app.layout = html.Div([
 
@@ -103,11 +103,15 @@ app.layout = html.Div([
             html.Div([
                 html.Div([
                     html.Div([
-                                html.H3(id='radial_predicted'),
-                                html.H3(id='radial_actual'),
-                                html.H3(id='radial_city_average'),
-                             ], style={'flex': '1'}
-                            ),
+                                html.H4(id='radial_predicted'),
+                                html.H4(id='radial_actual'),
+                                html.H4(id='radial_city_average'),
+                                html.H5('N factors:'),
+                                html.P([dcc.Dropdown(id="n_factors", options=n_factors_dict, value=6)]),
+                             ], style={'flex': '1'} ),
+                    html.Div([
+
+                    ]),
                          ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'height': '100%'},
                         )
                     ], style={'width': '29%', 'display': 'inline-block', 'height': '700px'}
@@ -260,7 +264,8 @@ dropdowns = ["tract_id"]
         [Output("graph", "figure"),
         Output('radial_predicted', 'children'),
         Output('radial_actual', 'children'),
-        Output('radial_city_average', 'children')],
+        Output('radial_city_average', 'children'),
+        Output('n_factors', 'value')],
         [Input('tract_map', "clickData")]
     )
 def generate_spider_plot(tract_map, n_factors=6):
@@ -268,6 +273,8 @@ def generate_spider_plot(tract_map, n_factors=6):
 
     location = int(tract_map['points'][0]['location'])
     tract_id = int(geo.iloc[location]['fips_state_county_tract_code'])
+    check = int(n_factors)
+    print(check)
 
     polar_data = CH.prepare_polar(data, weights, stcotr_fips=tract_id, n_factors=n_factors)
     predicted, actual = CH.predict_value(model, data, stcotr_fips=tract_id, y_var="Diabetes")
