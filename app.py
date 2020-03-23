@@ -134,6 +134,12 @@ app.layout = html.Div([
                    in industrialized nations. In America alone, #### in #### people suffer with T2D
                    and is projected to reach #### by ####. T2D increases the risk for cardiovascular
                    disease by 2-4 times, which is by far the leading cause of death in industrialized nations.
+
+                   In addition to clinical causes, risk of T2D has been widely associated with many
+                   socialeconomic factors . Social determinants of health such as education,
+                   employment, access to healthy food options, and health literacy may contribute to
+                   an individual's risk level.
+
                    The overall goal of this app is empower users of all kinds to better understand the various
                    factors underlying risk for T2D in many diverse communities across America.
                -  This app is ultimately meant to be used by anyone who has an interest in exploring T2D risk factors
@@ -177,7 +183,14 @@ app.layout = html.Div([
             html.Div(className="about_div", children=[
                 html.H2('How exactly do you predict diabetes risk?'),
                 dcc.Markdown('''
-                    Programming and unicorn sparkles.
+                    Research has shown that the economic and social inequalities can contribute
+                    to poorer health outcomes. Communities with poorer access to healthy food options,
+                    transportation, medical resources, and educational resources are more likely
+                    to have T2D. Many providers and healthcare workers do not have support tools
+                    to screen for an identify social determinants of T2D.
+
+                    Using neighborhood-level data, we have constructed an app that identifies
+                    the contribution of various determinants for specific communities.
                 ''')
             ])
         ])
