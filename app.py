@@ -24,8 +24,7 @@ def recompute():
     import json
     import geopandas as gpd
 
-    data_path = "data/cityhealth/CHDB_data_tract_all_v8_1.csv.gz"
-    data = CH.preprocess_data(data_path=data_path)
+    data = CH.preprocess_data()
     method = "ridge_regression"
     model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
     nyc_data = CH.preprocess_data(data_path=data_path, NYC_only=True, impute=False, drop_na=False)
