@@ -238,13 +238,30 @@ def serve_image(image_path):
 # Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
 def map_tracts(tract_id):
-    ''' '''
+    ''' Creates geographic heatmap of diabetes rates binned into quartiles '''
+
+    bin_labels = [0, .25, .5, .75, 1]
+    geo['Diabetes_bin'], bins_perc_diabetes = pd.qcut(geo['Diabetes'],
+                              q=5,
+                              retbins=True,
+                              labels=bin_labels)
+
     fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
             locations = [str(i) for i in geo.index.values],
-            z=geo['Diabetes'],
-            colorscale=sequential.Blues, zmin=0, zmax=12,
-            marker_opacity=0.5, marker_line_width=0,
+            z=geo['Diabetes_bin'],
+            colorscale=[(0, "rgb(222,235,247)"),
+                        (.25, "rgb(198,219,239)"),
+                        (.5, "rgb(107,174,214)"),
+                        (.75, "rgb(33,113,181)"),
+                        (1, "rgb(8,48,107)")],
+            zmin=0, zmax=1,
+            marker_opacity=0.75, marker_line_width=0,
             text = geo['hovertext'],
+            colorbar=dict(
+                title="Diabetes Rate",
+                tickvals=[0, 0.2, 0.4, 0.6, 0.8, 1],
+                ticktext=['{}%'.format(label) for label in list(bins_perc_diabetes.astype(str))],
+                )
             )
         )
 
@@ -289,7 +306,8 @@ def generate_spider_plot(tract_map, n_factors=6):
         line_close=True
     ).update_traces(
         fill='toself',
-        fillcolor='rgba(65, 105, 225, 0.60)',
+        # fillcolor='rgba(65, 105, 225, 0.60)',
+        fillcolor='rgba(8, 48, 107, 0.75)',
         mode = "lines",
         line_color = "#F0F0F0",
         # marker=dict(
@@ -319,7 +337,7 @@ def generate_spider_plot(tract_map, n_factors=6):
             linewidth = 2,
             gridcolor = "white",
             gridwidth = 2,
-            color = "#4169e1",
+            color = "rgba(0, 0, 0, .85)",
             visible =True,
             range=[min_max["min"], min_max["max"]]
           )
