@@ -25,15 +25,9 @@ def recompute():
     import geopandas as gpd
 
     data = CH.preprocess_data()
-=======
-    data = CH.preprocess_data()
->>>>>>> parent of d7de6f2... Update CityHealth data to V8. Update ML model
-=======
-    data = CH.preprocess_data()
->>>>>>> 92c02275586223aa59d8a725136525e5b967e347
     method = "ridge_regression"
     model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
-    nyc_data = CH.preprocess_data(data_path=data_path, NYC_only=True, impute=False, drop_na=False)
+    nyc_data = CH.preprocess_data(NYC_only=True, impute=False, drop_na=False)
 
     weights = CH.feature_weights(data, coefs=coefs, weight_label=method + "_coef")
     city_average = round(data["Diabetes"].mean(),1)
@@ -109,13 +103,14 @@ app.layout = html.Div([
             html.Div([
                 html.Div([
                     html.Div([
-                                html.H4(id='radial_predicted'),
-                                html.H4(id='radial_actual'),
-                                html.H4(id='radial_city_average'),
+                                html.H3(id='radial_predicted'),
+                                html.H3(id='radial_actual'),
+                                html.H3(id='radial_city_average'),
                                 html.H5('N factors:'),
                                 html.P([dcc.Dropdown(id="n_factors", options=n_factors_dict, value=6)]),
-                             ], style={'flex': '1'} ),
-                    html.Div([]),
+                             ], style={'flex': '1'}
+                            ),
+                            html.Div([]),
                          ],style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center', 'height': '100%'},
                         )
                     ], style={'width': '29%', 'display': 'inline-block', 'height': '700px'}
@@ -139,12 +134,6 @@ app.layout = html.Div([
                    in industrialized nations. In America alone, #### in #### people suffer with T2D
                    and is projected to reach #### by ####. T2D increases the risk for cardiovascular
                    disease by 2-4 times, which is by far the leading cause of death in industrialized nations.
-
-                   In addition to clinical causes, risk of T2D has been widely associated with many
-                   socialeconomic factors . Social determinants of health such as education,
-                   employment, access to healthy food options, and health literacy may contribute to
-                   an individual's risk level.
-
                    The overall goal of this app is empower users of all kinds to better understand the various
                    factors underlying risk for T2D in many diverse communities across America.
                -  This app is ultimately meant to be used by anyone who has an interest in exploring T2D risk factors
@@ -188,14 +177,7 @@ app.layout = html.Div([
             html.Div(className="about_div", children=[
                 html.H2('How exactly do you predict diabetes risk?'),
                 dcc.Markdown('''
-                    Research has shown that the economic and social inequalities can contribute
-                    to poorer health outcomes. Communities with poorer access to healthy food options,
-                    transportation, medical resources, and educational resources are more likely
-                    to have T2D. Many providers and healthcare workers do not have support tools
-                    to screen for an identify social determinants of T2D.
-
-                    Using neighborhood-level data, we have constructed an app that identifies
-                    the contribution of various determinants for specific communities.
+                    Programming and unicorn sparkles.
                 ''')
             ])
         ])
@@ -253,43 +235,27 @@ def serve_image(image_path):
     #     raise Exception('"{}" is excluded from the allowed static files'.format(image_path))
     return flask.send_from_directory(image_directory, image_name)
 
-# # Function to make interactive Map
+# Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
 def map_tracts(tract_id):
-    ''' Creates geographic heatmap of diabetes rates binned into quartiles '''
+    ''' '''
+    fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
+            locations = [str(i) for i in geo.index.values],
+            z=geo['Diabetes'],
+            colorscale=sequential.Blues, zmin=0, zmax=12,
+            marker_opacity=0.5, marker_line_width=0,
+            text = geo['hovertext'],
+            )
+        )
 
-    bin_labels = [0, .25, .5, .75, 1]
-    geo['Diabetes_bin'], bins_perc_diabetes = pd.qcut(geo['Diabetes'],
-                              q=5,
-                              retbins=True,
-                              labels=bin_labels)
-    # print(geo.columns)
-    # import json
-    # shapes = json.loads(geo['geometry'][:2].apply(lambda x: x).to_json())
-    # print(geo[geo['Diabetes'].isnull()])
-    # print('features')
-    # print(len(shapes['features']))
-    # print(geo[geo['geometry'].isnull()])
-    # fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
-    #         locations = [str(i) for i in geo.index.values],
-    #         z=geo['Diabetes_bin'],
-    #         # z=geo['Diabetes'],
-    #         colorscale=sequential.Blues,
-    #         colorscale=[(0, "rgb(222,235,247)"),
-    #                     (.25, "rgb(198,219,239)"),
-    #                     (.5, "rgb(107,174,214)"),
-    #                     (.75, "rgb(33,113,181)"),
-    #                     (1, "rgb(8,48,107)")],
-    #         zmin=0, zmax=1,
-    #         marker_opacity=0.75, marker_line_width=0,
-    #         text = geo['hovertext'],
-    #         colorbar=dict(
-    #             title="Diabetes Rate",
-    #             tickvals=[0, 0.2, 0.4, 0.6, 0.8, 1],
-    #             ticktext=['{}%'.format(label) for label in list(bins_perc_diabetes.astype(str))],
-    #             )
-    #         )
-    #     )
+    fig.update_layout(
+            mapbox_style="carto-positron",
+            mapbox_zoom=10,
+            mapbox_center = {"lat": 40.7410224, "lon": -73.9939661},
+            margin={"r":0,"t":0,"l":0,"b":0}
+        )
+
+    return fig
 
 # Function to make polar radial chart
 dropdowns = ["tract_id"]
@@ -299,7 +265,7 @@ dropdowns = ["tract_id"]
         Output('radial_actual', 'children'),
         Output('radial_city_average', 'children')],
         [Input('tract_map', "clickData"),
-         Input('n_factors','value')]
+        Input('n_factors','value')]
     )
 def generate_spider_plot(tract_map, n_factors=6):
     ''' '''
