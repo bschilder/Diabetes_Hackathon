@@ -24,16 +24,13 @@ def recompute():
     import json
     import geopandas as gpd
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    data_path = "data/cityhealth/CHDB_data_tract_all_v8_1.csv.gz"
-    data = CH.preprocess_data(data_path=data_path)
+    data = CH.preprocess_data()
 =======
     data = CH.preprocess_data()
 >>>>>>> parent of d7de6f2... Update CityHealth data to V8. Update ML model
 =======
     data = CH.preprocess_data()
->>>>>>> parent of d7de6f2... Update CityHealth data to V8. Update ML model
+>>>>>>> 92c02275586223aa59d8a725136525e5b967e347
     method = "ridge_regression"
     model, coefs = CH.train_model(data, test_size=0.3, method=method, plot_weights=False)
     nyc_data = CH.preprocess_data(data_path=data_path, NYC_only=True, impute=False, drop_na=False)
