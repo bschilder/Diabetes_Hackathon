@@ -248,7 +248,7 @@ def serve_image(image_path):
     #     raise Exception('"{}" is excluded from the allowed static files'.format(image_path))
     return flask.send_from_directory(image_directory, image_name)
 
-# Function to make interactive Map
+# # Function to make interactive Map
 @app.callback(Output("tract_map", "figure"), [Input("tract_id", "value")])
 def map_tracts(tract_id):
     ''' Creates geographic heatmap of diabetes rates binned into quartiles '''
@@ -258,26 +258,33 @@ def map_tracts(tract_id):
                               q=5,
                               retbins=True,
                               labels=bin_labels)
-
-    fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
-            locations = [str(i) for i in geo.index.values],
-            z=geo['Diabetes_bin'],
-            # colorscale=sequential.Blues,
-            colorscale=[(0, "rgb(222,235,247)"),
-                        (.25, "rgb(198,219,239)"),
-                        (.5, "rgb(107,174,214)"),
-                        (.75, "rgb(33,113,181)"),
-                        (1, "rgb(8,48,107)")],
-            zmin=0, zmax=1,
-            marker_opacity=0.75, marker_line_width=0,
-            text = geo['hovertext'],
-            colorbar=dict(
-                title="Diabetes Rate",
-                tickvals=[0, 0.2, 0.4, 0.6, 0.8, 1],
-                ticktext=['{}%'.format(label) for label in list(bins_perc_diabetes.astype(str))],
-                )
-            )
-        )
+    # print(geo.columns)
+    # import json
+    # shapes = json.loads(geo['geometry'][:2].apply(lambda x: x).to_json())
+    # print(geo[geo['Diabetes'].isnull()])
+    # print('features')
+    # print(len(shapes['features']))
+    # print(geo[geo['geometry'].isnull()])
+    # fig = go.Figure(go.Choroplethmapbox(geojson=shapes,
+    #         locations = [str(i) for i in geo.index.values],
+    #         z=geo['Diabetes_bin'],
+    #         # z=geo['Diabetes'],
+    #         colorscale=sequential.Blues,
+    #         colorscale=[(0, "rgb(222,235,247)"),
+    #                     (.25, "rgb(198,219,239)"),
+    #                     (.5, "rgb(107,174,214)"),
+    #                     (.75, "rgb(33,113,181)"),
+    #                     (1, "rgb(8,48,107)")],
+    #         zmin=0, zmax=1,
+    #         marker_opacity=0.75, marker_line_width=0,
+    #         text = geo['hovertext'],
+    #         colorbar=dict(
+    #             title="Diabetes Rate",
+    #             tickvals=[0, 0.2, 0.4, 0.6, 0.8, 1],
+    #             ticktext=['{}%'.format(label) for label in list(bins_perc_diabetes.astype(str))],
+    #             )
+    #         )
+    #     )
 
 # Function to make polar radial chart
 dropdowns = ["tract_id"]
