@@ -25,8 +25,12 @@ def recompute():
     import geopandas as gpd
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     data_path = "data/cityhealth/CHDB_data_tract_all_v8_1.csv.gz"
     data = CH.preprocess_data(data_path=data_path)
+=======
+    data = CH.preprocess_data()
+>>>>>>> parent of d7de6f2... Update CityHealth data to V8. Update ML model
 =======
     data = CH.preprocess_data()
 >>>>>>> parent of d7de6f2... Update CityHealth data to V8. Update ML model
